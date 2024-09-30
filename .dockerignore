@@ -1,0 +1,10 @@
+# ignore everything by default
+**
+
+# allow Rust files
+!Cargo.*
+!src/
+
+# allow web assets
+!static/
+!templates/

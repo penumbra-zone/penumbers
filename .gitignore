@@ -1,3 +1,10 @@
 /target
 .postgres/
 .scripts/
+
+# ignore direnv; copy from `.envrc.example`
+.envrc
+.direnv/
+
+# ignore nix build output
+result
