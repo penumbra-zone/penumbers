@@ -1,7 +1,4 @@
-mod block;
 mod common;
-mod example;
-mod index;
 mod static_files;
 mod validators;
 
@@ -36,11 +33,8 @@ impl WebServer {
 
     pub async fn run(self) -> anyhow::Result<()> {
         let app = Router::new()
-            .nest("/", index::router())
+            .nest("/", validators::router())
             .nest("/static", static_files::router())
-            .nest("/example", example::router())
-            .nest("/current/validators", validators::router())
-            .nest("/history/blocks", block::router())
             .with_state(self.state)
             .layer(
                 TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {

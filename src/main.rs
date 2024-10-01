@@ -1,6 +1,5 @@
 mod component;
 mod error;
-mod indexer;
 mod pagination;
 mod sql;
 pub(self) mod state;
@@ -34,9 +33,10 @@ fn init_tracing() {
 struct Options {
     /// The listening address, if the web server should be run
     #[clap(long)]
-    web: Option<String>,
-    #[clap(flatten)]
-    indexer: pindexer::Options,
+    web: String,
+    /// The database to read from
+    #[clap(long)]
+    database: String,
 }
 
 #[tokio::main]
@@ -45,22 +45,9 @@ async fn main() -> anyhow::Result<()> {
 
     let opt = Options::parse();
 
-    let state = AppState::create(opt.indexer.dst_database_url.as_ref()).await?;
-    let web_server_handle = if let Some(web) = opt.web {
-        let address = SocketAddr::from_str(web.as_ref())?;
-        tokio::spawn(web::WebServer::new(state, address).run())
-    } else {
-        tokio::spawn(async {
-            loop {
-                tokio::task::yield_now().await
-            }
-        })
-    };
+    let state = AppState::create(opt.database.as_ref()).await?;
+    let address = SocketAddr::from_str(opt.web.as_ref())?;
 
-    let indexer_handle = indexer::Indexer::new(opt.indexer).run();
-
-    tokio::select! {
-        x = web_server_handle => x?,
-        x = indexer_handle => x
-    }
+    web::WebServer::new(state, address).run().await?;
+    Ok(())
 }

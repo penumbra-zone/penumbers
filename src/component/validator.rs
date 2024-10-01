@@ -1,4 +1,5 @@
-use decaf377_rdsa::VerificationKeyBytes;
+use std::str::FromStr;
+
 use penumbra_keys::address::Address;
 use penumbra_stake::{validator, IdentityKey};
 use serde::{self, Deserialize, Serialize};
@@ -20,10 +21,10 @@ pub struct ValidatorSummary {
 
 impl<'r> sqlx::FromRow<'r, PgRow> for ValidatorSummary {
     fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
-        let x: (&'r str, [u8; 32], i64) = sqlx::FromRow::from_row(row)?;
+        let x: (&'r str, String, i64) = sqlx::FromRow::from_row(row)?;
         Ok(ValidatorSummary {
             name: x.0.to_string(),
-            identity: IdentityKey(VerificationKeyBytes::from(x.1)),
+            identity: IdentityKey::from_str(x.1.as_str()).expect("database should have valid identity keys"),
             voting_power: x.2,
         })
     }
@@ -62,9 +63,9 @@ pub struct Validator {
 
 impl<'r> sqlx::FromRow<'r, PgRow> for Validator {
     fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
-        let x: ([u8; 32], &'r str, i64, &'r str) = sqlx::FromRow::from_row(row)?;
+        let x: (String, &'r str, i64, &'r str) = sqlx::FromRow::from_row(row)?;
 
-        let identity = IdentityKey(VerificationKeyBytes::from(x.0));
+        let identity = IdentityKey::from_str(x.0.as_str()).expect("database should have valid identity keys");
         let name = x.1.to_string();
         let voting_power = x.2;
         let definition: validator::Validator =
@@ -121,14 +122,6 @@ impl Component {
         ),
         ("validator", include_str!("../../templates/validator.html")),
     ];
-
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub fn attach_to_indexer(self, indexer: pindexer::Indexer) -> pindexer::Indexer {
-        indexer.with_index(pindexer::stake::ValidatorSet {})
-    }
 
     /// Fetch a list of validators, in descending voting power.
     pub async fn validators(pool: &PgPool) -> anyhow::Result<Vec<ValidatorSummary>> {
