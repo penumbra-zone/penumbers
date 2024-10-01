@@ -1,19 +1,40 @@
-mod block;
 mod common;
-mod example;
-mod index;
 mod static_files;
-mod validators;
 
 use axum::{
-    extract::{MatchedPath, Request},
-    Router,
+    extract::{MatchedPath, Request, State},
+    response::{Html, IntoResponse as _, Response},
+    routing::get,
+    Json, Router,
 };
+use common::AcceptsJson;
 use core::net::SocketAddr;
+use serde::Serialize;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 
-use crate::state::AppState;
+use crate::error::Result;
+use crate::state::{database::TotalSupply, AppState};
+
+#[derive(Debug, Clone, Serialize)]
+struct IndexResponse {
+    supply: TotalSupply,
+}
+
+async fn index_handler(
+    State(state): State<AppState>,
+    AcceptsJson(json): AcceptsJson,
+) -> Result<Response> {
+    let resp = IndexResponse {
+        supply: state.database().total_supply().await?,
+    };
+
+    if json {
+        Ok(Json(resp).into_response())
+    } else {
+        Ok(Html(state.render_template("index.html", resp)?).into_response())
+    }
+}
 
 /// Represents the configuration of the web server.
 ///
@@ -36,11 +57,8 @@ impl WebServer {
 
     pub async fn run(self) -> anyhow::Result<()> {
         let app = Router::new()
-            .nest("/", index::router())
+            .route("/", get(index_handler))
             .nest("/static", static_files::router())
-            .nest("/example", example::router())
-            .nest("/current/validators", validators::router())
-            .nest("/history/blocks", block::router())
             .with_state(self.state)
             .layer(
                 TraceLayer::new_for_http().make_span_with(|request: &Request<_>| {

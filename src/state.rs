@@ -1,18 +1,13 @@
+pub mod database;
+
+use database::Database;
 use minijinja::Environment;
 use serde::Serialize;
-use sqlx::PgPool;
-
-use crate::component;
 
 fn create_environment() -> anyhow::Result<Environment<'static>> {
     let mut environment = Environment::new();
 
-    for (name, file) in [component::block::Component::TEMPLATE]
-        .into_iter()
-        .chain(component::validator::Component::TEMPLATES)
-    {
-        environment.add_template(name, file)?;
-    }
+    environment.add_template("index.html", include_str!("../templates/index.html"))?;
 
     Ok(environment)
 }
@@ -20,8 +15,7 @@ fn create_environment() -> anyhow::Result<Environment<'static>> {
 /// Represents the state of our application.
 #[derive(Debug, Clone)]
 pub struct AppState {
-    /// The connection pool for postgres.
-    pool: PgPool,
+    database: Database,
     environment: Environment<'static>,
 }
 
@@ -30,14 +24,17 @@ impl AppState {
     ///
     /// - `db_url` is used to connect to our postgres database.
     pub async fn create(db_url: &str) -> anyhow::Result<Self> {
-        let pool = PgPool::connect(db_url).await?;
+        let database = Database::new(db_url).await?;
         let environment = create_environment()?;
-        Ok(Self { pool, environment })
+        Ok(Self {
+            database,
+            environment,
+        })
     }
 
     /// Get the database pool associated with this state.
-    pub fn pool(&self) -> &PgPool {
-        &self.pool
+    pub fn database(&self) -> &Database {
+        &self.database
     }
 
     /// Render a template by name
