@@ -1,4 +1,3 @@
-mod component;
 mod error;
 mod pagination;
 mod sql;
