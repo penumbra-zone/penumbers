@@ -37,6 +37,7 @@ impl TotalSupply {
             LEFT JOIN LATERAL (
               SELECT um as unstaked_um, auction, dex 
               FROM supply_total_unstaked
+              ORDER BY HEIGHT DESC
               LIMIT 1
             ) on TRUE
         "#,
