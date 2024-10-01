@@ -315,9 +315,9 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
 name = "async-stream"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd56dd203fef61ac097dd65721a419ddccb106b2d2b70ba60a6b529f03961a51"
+checksum = "0b5a71a6f37880a80d1d7f19efd781e4b5de42c88f0722cc13bcb6cc2cfe8476"
 dependencies = [
  "async-stream-impl",
  "futures-core",
@@ -326,9 +326,9 @@ dependencies = [
 
 [[package]]
 name = "async-stream-impl"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16e62a023e7c117e27523144c5d2459f4397fcc3cab0085af8e2224f643a0193"
+checksum = "c7c24de15d275a1ecfd47a380fb4d5ec9bfe0933f309ed5e705b775596a3574d"
 dependencies = [
  "proc-macro2 1.0.86",
  "quote",
@@ -747,9 +747,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.1.23"
+version = "1.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bbb537bb4a30b90362caddba8f360c0a56bc13d3a5570028e7197204cb54a17"
+checksum = "812acba72f0a070b003d3697490d2b55b837230ae7c6c6497f05cc2ddbb8d938"
 dependencies = [
  "jobserver",
  "libc",
@@ -887,7 +887,7 @@ dependencies = [
 [[package]]
 name = "cnidarium"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -921,7 +921,7 @@ dependencies = [
 [[package]]
 name = "cnidarium-component"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -933,7 +933,7 @@ dependencies = [
 [[package]]
 name = "cometindex"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1146,7 +1146,21 @@ dependencies = [
 [[package]]
 name = "decaf377-fmd"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
+dependencies = [
+ "ark-ff",
+ "ark-serialize",
+ "bitvec",
+ "blake2b_simd 1.0.2",
+ "decaf377",
+ "rand_core",
+ "thiserror",
+]
+
+[[package]]
+name = "decaf377-fmd"
+version = "0.80.5"
+source = "git+https://github.com/penumbra-zone/penumbra#772fc69034907cddfca5e68b08ef92b016968d89"
 dependencies = [
  "ark-ff",
  "ark-serialize",
@@ -1160,7 +1174,7 @@ dependencies = [
 [[package]]
 name = "decaf377-ka"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "ark-ff",
  "decaf377",
@@ -1839,9 +1853,9 @@ checksum = "add0ab9360ddbd88cfeb3bd9574a1d85cfdfa14db10b3e21d3700dbc4328758f"
 
 [[package]]
 name = "httparse"
-version = "1.9.4"
+version = "1.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fcc0b4a115bf80b728eb8ea024ad5bd707b615bfed49e0665b6e0f86fd082d9"
+checksum = "7d71d3574edd2771538b901e6549113b4006ece66150fb69c0fb6d9a2adae946"
 
 [[package]]
 name = "httpdate"
@@ -3053,8 +3067,8 @@ dependencies = [
  "num-bigint",
  "penumbra-asset",
  "penumbra-keys",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-stake",
  "pindexer",
  "serde",
@@ -3070,7 +3084,7 @@ dependencies = [
 [[package]]
 name = "penumbra-app"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3105,9 +3119,9 @@ dependencies = [
  "penumbra-governance",
  "penumbra-ibc",
  "penumbra-keys",
- "penumbra-num",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-stake",
@@ -3144,7 +3158,7 @@ dependencies = [
 [[package]]
 name = "penumbra-asset"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3157,7 +3171,7 @@ dependencies = [
  "blake2b_simd 1.0.2",
  "bytes",
  "decaf377",
- "decaf377-fmd",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "decaf377-rdsa",
  "derivative",
  "ethnum",
@@ -3166,8 +3180,8 @@ dependencies = [
  "num-bigint",
  "once_cell",
  "pbjson-types",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "poseidon377",
  "rand",
  "rand_core",
@@ -3182,7 +3196,7 @@ dependencies = [
 [[package]]
 name = "penumbra-auction"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3209,9 +3223,9 @@ dependencies = [
  "penumbra-asset",
  "penumbra-dex",
  "penumbra-keys",
- "penumbra-num",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-tct",
@@ -3234,7 +3248,7 @@ dependencies = [
 [[package]]
 name = "penumbra-community-pool"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3250,8 +3264,8 @@ dependencies = [
  "pbjson-types",
  "penumbra-asset",
  "penumbra-keys",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-txhash",
@@ -3266,7 +3280,7 @@ dependencies = [
 [[package]]
 name = "penumbra-compact-block"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3284,7 +3298,7 @@ dependencies = [
  "penumbra-governance",
  "penumbra-ibc",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-stake",
@@ -3302,7 +3316,7 @@ dependencies = [
 [[package]]
 name = "penumbra-dex"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3319,7 +3333,7 @@ dependencies = [
  "cnidarium",
  "cnidarium-component",
  "decaf377",
- "decaf377-fmd",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "decaf377-ka",
  "decaf377-rdsa",
  "futures",
@@ -3333,9 +3347,9 @@ dependencies = [
  "penumbra-asset",
  "penumbra-fee",
  "penumbra-keys",
- "penumbra-num",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-tct",
@@ -3360,15 +3374,15 @@ dependencies = [
 [[package]]
 name = "penumbra-distributions"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "async-trait",
  "cnidarium",
  "cnidarium-component",
  "penumbra-asset",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "serde",
  "tendermint",
@@ -3378,7 +3392,7 @@ dependencies = [
 [[package]]
 name = "penumbra-fee"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3392,8 +3406,8 @@ dependencies = [
  "im",
  "metrics",
  "penumbra-asset",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "rand",
  "rand_core",
  "serde",
@@ -3405,7 +3419,7 @@ dependencies = [
 [[package]]
 name = "penumbra-funding"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3416,8 +3430,8 @@ dependencies = [
  "penumbra-asset",
  "penumbra-community-pool",
  "penumbra-distributions",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-stake",
@@ -3429,7 +3443,7 @@ dependencies = [
 [[package]]
 name = "penumbra-governance"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3457,9 +3471,9 @@ dependencies = [
  "penumbra-distributions",
  "penumbra-ibc",
  "penumbra-keys",
- "penumbra-num",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-stake",
@@ -3482,7 +3496,7 @@ dependencies = [
 [[package]]
 name = "penumbra-ibc"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3500,8 +3514,8 @@ dependencies = [
  "once_cell",
  "pbjson-types",
  "penumbra-asset",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-txhash",
  "prost",
@@ -3519,7 +3533,7 @@ dependencies = [
 [[package]]
 name = "penumbra-keys"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "aes",
  "anyhow",
@@ -3535,7 +3549,7 @@ dependencies = [
  "bytes",
  "chacha20poly1305",
  "decaf377",
- "decaf377-fmd",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "decaf377-ka",
  "decaf377-rdsa",
  "derivative",
@@ -3548,7 +3562,7 @@ dependencies = [
  "once_cell",
  "pbkdf2",
  "penumbra-asset",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-tct",
  "poseidon377",
  "rand",
@@ -3563,7 +3577,7 @@ dependencies = [
 [[package]]
 name = "penumbra-num"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3578,7 +3592,7 @@ dependencies = [
  "blake2b_simd 1.0.2",
  "bytes",
  "decaf377",
- "decaf377-fmd",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "decaf377-rdsa",
  "derivative",
  "ethnum",
@@ -3586,7 +3600,43 @@ dependencies = [
  "ibig",
  "num-bigint",
  "once_cell",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "rand",
+ "rand_core",
+ "regex",
+ "serde",
+ "sha2 0.10.8",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "penumbra-num"
+version = "0.80.5"
+source = "git+https://github.com/penumbra-zone/penumbra#772fc69034907cddfca5e68b08ef92b016968d89"
+dependencies = [
+ "anyhow",
+ "ark-ff",
+ "ark-groth16",
+ "ark-r1cs-std",
+ "ark-relations",
+ "ark-serialize",
+ "ark-snark",
+ "ark-std",
+ "base64 0.21.7",
+ "bech32",
+ "blake2b_simd 1.0.2",
+ "bytes",
+ "decaf377",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra)",
+ "decaf377-rdsa",
+ "derivative",
+ "ethnum",
+ "hex",
+ "ibig",
+ "num-bigint",
+ "once_cell",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra)",
  "rand",
  "rand_core",
  "regex",
@@ -3599,7 +3649,7 @@ dependencies = [
 [[package]]
 name = "penumbra-proof-params"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ec",
@@ -3624,14 +3674,14 @@ dependencies = [
 [[package]]
 name = "penumbra-proto"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "async-trait",
  "bech32",
  "bytes",
  "cnidarium",
- "decaf377-fmd",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "decaf377-rdsa",
  "futures",
  "hex",
@@ -3651,9 +3701,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "penumbra-proto"
+version = "0.80.5"
+source = "git+https://github.com/penumbra-zone/penumbra#772fc69034907cddfca5e68b08ef92b016968d89"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bech32",
+ "bytes",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra)",
+ "decaf377-rdsa",
+ "futures",
+ "hex",
+ "ibc-proto",
+ "ibc-types",
+ "ics23",
+ "pbjson",
+ "pbjson-types",
+ "pin-project",
+ "prost",
+ "serde",
+ "serde_json",
+ "subtle-encoding",
+ "tendermint",
+ "tracing",
+]
+
+[[package]]
 name = "penumbra-sct"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3675,7 +3752,7 @@ dependencies = [
  "once_cell",
  "pbjson-types",
  "penumbra-keys",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-tct",
  "poseidon377",
  "rand",
@@ -3689,7 +3766,7 @@ dependencies = [
 [[package]]
 name = "penumbra-shielded-pool"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3707,7 +3784,7 @@ dependencies = [
  "cnidarium",
  "cnidarium-component",
  "decaf377",
- "decaf377-fmd",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "decaf377-ka",
  "decaf377-rdsa",
  "futures",
@@ -3720,9 +3797,9 @@ dependencies = [
  "penumbra-asset",
  "penumbra-ibc",
  "penumbra-keys",
- "penumbra-num",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-tct",
  "penumbra-txhash",
@@ -3743,7 +3820,7 @@ dependencies = [
 [[package]]
 name = "penumbra-stake"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3769,9 +3846,9 @@ dependencies = [
  "penumbra-asset",
  "penumbra-distributions",
  "penumbra-keys",
- "penumbra-num",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-tct",
@@ -3793,7 +3870,7 @@ dependencies = [
 [[package]]
 name = "penumbra-tct"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "ark-ed-on-bls12-377",
  "ark-ff",
@@ -3810,7 +3887,7 @@ dependencies = [
  "im",
  "once_cell",
  "parking_lot",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "poseidon377",
  "rand",
  "serde",
@@ -3821,7 +3898,7 @@ dependencies = [
 [[package]]
 name = "penumbra-test-subscriber"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "tracing",
  "tracing-subscriber 0.3.18",
@@ -3830,7 +3907,7 @@ dependencies = [
 [[package]]
 name = "penumbra-tower-trace"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "futures",
  "hex",
@@ -3852,7 +3929,7 @@ dependencies = [
 [[package]]
 name = "penumbra-transaction"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "ark-ff",
@@ -3863,7 +3940,7 @@ dependencies = [
  "bytes",
  "chacha20poly1305",
  "decaf377",
- "decaf377-fmd",
+ "decaf377-fmd 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "decaf377-ka",
  "decaf377-rdsa",
  "derivative",
@@ -3881,9 +3958,9 @@ dependencies = [
  "penumbra-governance",
  "penumbra-ibc",
  "penumbra-keys",
- "penumbra-num",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-proof-params",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-sct",
  "penumbra-shielded-pool",
  "penumbra-stake",
@@ -3904,13 +3981,13 @@ dependencies = [
 [[package]]
 name = "penumbra-txhash"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "blake2b_simd 1.0.2",
  "getrandom",
  "hex",
- "penumbra-proto",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-tct",
  "serde",
 ]
@@ -3966,7 +4043,7 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 [[package]]
 name = "pindexer"
 version = "0.80.5"
-source = "git+https://github.com/penumbra-zone/penumbra?tag=v0.80.5#43f6e9375354b4684d4232e89270244e803175f6"
+source = "git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing#4745046c7718a9f7d77d81637a1ee5cecb754cda"
 dependencies = [
  "anyhow",
  "clap",
@@ -3974,10 +4051,13 @@ dependencies = [
  "num-bigint",
  "penumbra-app",
  "penumbra-asset",
+ "penumbra-auction",
  "penumbra-dex",
+ "penumbra-fee",
  "penumbra-governance",
- "penumbra-num",
- "penumbra-proto",
+ "penumbra-keys",
+ "penumbra-num 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
+ "penumbra-proto 0.80.5 (git+https://github.com/penumbra-zone/penumbra?branch=transfer-events-indexing)",
  "penumbra-shielded-pool",
  "penumbra-stake",
  "serde_json",
@@ -4719,9 +4799,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.9.0"
+version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69cecfa94848272156ea67b2b1a53f20fc7bc638c4a46d2f8abde08f05f4b857"
+checksum = "9720086b3357bcb44fce40117d769a4d068c70ecfa190850a980a71755f66fcc"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -4737,9 +4817,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.9.0"
+version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8fee4991ef4f274617a51ad4af30519438dacb2f56ac773b08a1922ff743350"
+checksum = "5f1abbfe725f27678f4663bcacb75a83e829fd464c25d78dd038a3a29e307cec"
 dependencies = [
  "darling",
  "proc-macro2 1.0.86",
