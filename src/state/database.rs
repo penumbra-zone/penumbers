@@ -100,9 +100,44 @@ impl ShieldedValue {
                 SUM(amount)::TEXT,
                 SUM(CASE WHEN kind = 'inbound' THEN amount ELSE 0 END)::TEXT
             FROM ibc_transfer
+            WHERE asset != $1
             GROUP BY asset
         "#,
         )
+        .bind(penumbra_asset::STAKING_TOKEN_ASSET_ID.to_bytes())
+        .fetch_all(pool)
+        .await?;
+        let by_asset = out
+            .into_iter()
+            .map(|x| {
+                let current = if x.1.starts_with('-') {
+                    Amount::default()
+                } else {
+                    Amount::try_from(x.1)?
+                };
+                Ok(Deposit {
+                    asset: AssetId::try_from(x.0.as_slice()).context("failed to parse asset ID")?,
+                    current,
+                    total: Amount::try_from(x.2).context("failed to parse total")?,
+                })
+            })
+            .collect::<anyhow::Result<_>>()?;
+        Ok(ShieldedValue { by_asset })
+    }
+
+    async fn fetch_unshielded(pool: &PgPool) -> anyhow::Result<Self> {
+        let out: Vec<(Vec<u8>, String, String)> = sqlx::query_as(
+            r#"
+            SELECT
+                asset,
+                (-SUM(amount))::TEXT,
+                (-SUM(CASE WHEN kind = 'outbound' OR kind ilike '%refund%' THEN amount ELSE 0 END))::TEXT
+            FROM ibc_transfer
+            WHERE asset = $1
+            GROUP BY asset
+        "#,
+        )
+        .bind(penumbra_asset::STAKING_TOKEN_ASSET_ID.to_bytes())
         .fetch_all(pool)
         .await?;
         let by_asset = out
@@ -146,7 +181,11 @@ impl Database {
         Depositors::fetch(&self.pool).await
     }
 
-    pub async fn asset_deposits(&self) -> anyhow::Result<ShieldedValue> {
+    pub async fn shielded_value(&self) -> anyhow::Result<ShieldedValue> {
         ShieldedValue::fetch(&self.pool).await
+    }
+
+    pub async fn unshielded_value(&self) -> anyhow::Result<ShieldedValue> {
+        ShieldedValue::fetch_unshielded(&self.pool).await
     }
 }

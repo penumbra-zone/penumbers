@@ -28,6 +28,7 @@ struct IndexResponse {
     supply: TotalSupply,
     depositors: Depositors,
     shielded: ShieldedValue,
+    unshielded: ShieldedValue,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -118,6 +119,7 @@ struct FormattedIndexResponse {
     supply: FormattedSupply,
     depositors: Depositors,
     shielded: FormattedShieldedValue,
+    unshielded: FormattedShieldedValue,
 }
 
 async fn index_handler(
@@ -134,12 +136,17 @@ async fn index_handler(
     });
     let shielded_task = tokio::spawn({
         let db = state.database();
-        async move { db.asset_deposits().await }
+        async move { db.shielded_value().await }
+    });
+    let unshielded_task = tokio::spawn({
+        let db = state.database();
+        async move { db.unshielded_value().await }
     });
     let resp = IndexResponse {
         supply: supply_task.await??,
         depositors: depositors_task.await??,
         shielded: shielded_task.await??,
+        unshielded: unshielded_task.await??,
     };
 
     if json {
@@ -150,6 +157,7 @@ async fn index_handler(
             supply: FormattedSupply::format(&registry, resp.supply),
             depositors: resp.depositors,
             shielded: FormattedShieldedValue::format(&registry, resp.shielded)?,
+            unshielded: FormattedShieldedValue::format(&registry, resp.unshielded)?
         };
         Ok(Html(state.render_template("index.html", formatted)?).into_response())
     }
