@@ -14,7 +14,7 @@ use tower_http::trace::TraceLayer;
 use tracing::info_span;
 
 use crate::state::{
-    database::{AssetDeposits, TotalSupply},
+    database::{ShieldedValue, TotalSupply},
     AppState,
 };
 use crate::{error::Result, state::database::Depositors};
@@ -23,7 +23,7 @@ use crate::{error::Result, state::database::Depositors};
 struct IndexResponse {
     supply: TotalSupply,
     depositors: Depositors,
-    asset_deposits: AssetDeposits,
+    shielded: ShieldedValue,
 }
 
 async fn index_handler(
@@ -38,14 +38,14 @@ async fn index_handler(
         let db = state.database();
         async move { db.depositors().await }
     });
-    let asset_deposits_task = tokio::spawn({
+    let shielded_task = tokio::spawn({
         let db = state.database();
         async move { db.asset_deposits().await }
     });
     let resp = IndexResponse {
         supply: supply_task.await??,
         depositors: depositors_task.await??,
-        asset_deposits: asset_deposits_task.await??,
+        shielded: shielded_task.await??,
     };
 
     if json {
