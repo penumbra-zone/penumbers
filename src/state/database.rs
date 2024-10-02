@@ -1,5 +1,8 @@
 use anyhow::Context;
+use penumbra_asset::asset::Id as AssetId;
+use penumbra_num::Amount;
 use serde::Serialize;
+use serde_with::{serde_as, DisplayFromStr};
 use sqlx::PgPool;
 
 #[derive(Clone, Debug, Serialize)]
@@ -72,6 +75,55 @@ impl Depositors {
     }
 }
 
+#[serde_as]
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct Deposit {
+    #[serde_as(as = "DisplayFromStr")]
+    pub asset: AssetId,
+    #[serde_as(as = "DisplayFromStr")]
+    pub cumulative: Amount,
+    #[serde_as(as = "DisplayFromStr")]
+    pub current: Amount,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AssetDeposits {
+    pub deposits: Vec<Deposit>,
+}
+
+impl AssetDeposits {
+    async fn fetch(pool: &PgPool) -> anyhow::Result<Self> {
+        let out: Vec<(Vec<u8>, String, String)> = sqlx::query_as(
+            r#"
+            SELECT
+                asset,
+                SUM(amount)::TEXT,
+                SUM(CASE WHEN kind = 'inbound' THEN amount ELSE 0 END)::TEXT
+            FROM ibc_transfer
+            GROUP BY asset
+        "#,
+        )
+        .fetch_all(pool)
+        .await?;
+        let deposits = out
+            .into_iter()
+            .map(|x| {
+                let current = if x.1.starts_with('-') {
+                    Amount::default()
+                } else {
+                    Amount::try_from(x.1)?
+                };
+                Ok(Deposit {
+                    asset: AssetId::try_from(x.0.as_slice()).context("failed to parse asset ID")?,
+                    current,
+                    cumulative: Amount::try_from(x.2).context("failed to parse cumulative")?,
+                })
+            })
+            .collect::<anyhow::Result<_>>()?;
+        Ok(AssetDeposits { deposits })
+    }
+}
+
 /// A database handle.
 ///
 /// This is efficiently cloneable, internally reference counted.
@@ -92,5 +144,9 @@ impl Database {
 
     pub async fn depositors(&self) -> anyhow::Result<Depositors> {
         Depositors::fetch(&self.pool).await
+    }
+
+    pub async fn asset_deposits(&self) -> anyhow::Result<AssetDeposits> {
+        AssetDeposits::fetch(&self.pool).await
     }
 }

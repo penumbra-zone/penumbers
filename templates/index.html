@@ -44,6 +44,25 @@
     </tbody>
     </table>
   </div>
+  <div class="info-table">
+    <h1>deposits</h1>
+    <table>
+    <thead>
+      <th>asset</th>
+      <th>current</th>
+      <th>cumulative</th>
+    </thead>
+    <tbody>
+    {% for deposit in asset_deposits.deposits %}
+    <tr>
+      <th>{{ deposit.asset }}</th>
+      <th class="text-right">{{ deposit.current }}</th>
+      <th class="text-right">{{ deposit.cumulative }}</th>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+  </div>
 </div>
 </body>
 </html>
