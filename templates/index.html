@@ -64,6 +64,23 @@
     </table>
   </div>
   <div class="info-table">
+    <h1>native tokens on other chains</h1>
+    <table>
+    <thead>
+      <th>asset</th>
+      <th>current</th>
+    </thead>
+    <tbody>
+    {% for entry in unshielded.by_asset %}
+    <tr>
+      <th>{{ entry.asset }}</th>
+      <th class="text-right">{{ entry.current }}</th>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+  </div>
+  <div class="info-table">
     <h1>shielded value (unknown assets)</h1>
     <table>
     <thead>
