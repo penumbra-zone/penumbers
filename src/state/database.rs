@@ -1,13 +1,14 @@
+use anyhow::Context;
 use serde::Serialize;
 use sqlx::PgPool;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct TotalSupply {
-    total: u64,
-    unstaked: u64,
-    staked: u64,
-    auction: u64,
-    dex: u64,
+    pub total: u64,
+    pub unstaked: u64,
+    pub staked: u64,
+    pub auction: u64,
+    pub dex: u64,
 }
 
 impl TotalSupply {
@@ -54,6 +55,26 @@ impl TotalSupply {
     }
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct Depositors {
+    /// The number of unique depositors.
+    pub total: u64,
+}
+
+impl Depositors {
+    async fn fetch(pool: &PgPool) -> anyhow::Result<Self> {
+        let res: i64 = sqlx::query_scalar("SELECT COUNT(DISTINCT foreign_addr) FROM ibc_transfer")
+            .fetch_one(pool)
+            .await?;
+        Ok(Depositors {
+            total: u64::try_from(res).context("failed to convert COUNT to u64")?,
+        })
+    }
+}
+
+/// A database handle.
+///
+/// This is efficiently cloneable, internally reference counted.
 #[derive(Clone, Debug)]
 pub struct Database {
     pool: PgPool,
@@ -67,5 +88,9 @@ impl Database {
 
     pub async fn total_supply(&self) -> anyhow::Result<TotalSupply> {
         TotalSupply::fetch(&self.pool).await
+    }
+
+    pub async fn depositors(&self) -> anyhow::Result<Depositors> {
+        Depositors::fetch(&self.pool).await
     }
 }
