@@ -13,20 +13,30 @@ use serde::Serialize;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 
-use crate::error::Result;
 use crate::state::{database::TotalSupply, AppState};
+use crate::{error::Result, state::database::Depositors};
 
 #[derive(Debug, Clone, Serialize)]
 struct IndexResponse {
     supply: TotalSupply,
+    depositors: Depositors,
 }
 
 async fn index_handler(
     State(state): State<AppState>,
     AcceptsJson(json): AcceptsJson,
 ) -> Result<Response> {
+    let supply_task = tokio::spawn({
+        let db = state.database();
+        async move { db.total_supply().await }
+    });
+    let depositors_task = tokio::spawn({
+        let db = state.database();
+        async move { db.depositors().await }
+    });
     let resp = IndexResponse {
-        supply: state.database().total_supply().await?,
+        supply: supply_task.await??,
+        depositors: depositors_task.await??,
     };
 
     if json {

@@ -33,8 +33,8 @@ impl AppState {
     }
 
     /// Get the database pool associated with this state.
-    pub fn database(&self) -> &Database {
-        &self.database
+    pub fn database(&self) -> Database {
+        self.database.clone()
     }
 
     /// Render a template by name
