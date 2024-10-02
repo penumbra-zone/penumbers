@@ -1,7 +1,7 @@
 mod common;
 mod static_files;
 
-use anyhow::anyhow;
+use anyhow;
 use axum::{
     extract::{MatchedPath, Request, State},
     response::{Html, IntoResponse as _, Response},
@@ -62,22 +62,26 @@ struct FormattedDeposit {
     pub total: String,
     pub current: String,
     pub known: bool,
+    pub image: String,
 }
 
 impl FormattedDeposit {
     fn format(registry: &Registry, value: Deposit) -> anyhow::Result<Self> {
         let meta = registry.metadata(&value.asset);
+        let black_image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==".to_string();
         match meta {
             None => Ok(Self {
                 asset: value.asset.to_string(),
                 total: value.total.to_string(),
                 current: value.current.to_string(),
+                image: black_image,
                 known: false,
             }),
             Some(meta) => Ok(Self {
                 total: meta.format(&value.asset, value.total),
                 current: meta.format(&value.asset, value.current),
                 asset: meta.symbol.clone(),
+                image: meta.image().unwrap_or(black_image),
                 known: true,
             }),
         }
@@ -157,7 +161,7 @@ async fn index_handler(
             supply: FormattedSupply::format(&registry, resp.supply),
             depositors: resp.depositors,
             shielded: FormattedShieldedValue::format(&registry, resp.shielded)?,
-            unshielded: FormattedShieldedValue::format(&registry, resp.unshielded)?
+            unshielded: FormattedShieldedValue::format(&registry, resp.unshielded)?,
         };
         Ok(Html(state.render_template("index.html", formatted)?).into_response())
     }
