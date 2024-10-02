@@ -91,15 +91,15 @@ body {
   width: 100%;
 }
 
-.info-table th {
+.info-table th, .info-table-grid th {
   border: 1px solid;
 }
 
-.info-table thead {
+.info-table thead, .info-table-grid thead {
   font-weight: bold;
 }
 
-.info-table h1 {
+.info-table h1, .info-table-grid h1 {
   font-weight: bold;
   background-color: black;
   color: white;
@@ -131,3 +131,19 @@ body {
 .long-text {
   width: 60em;
 }
+
+.asset-with-image {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.4em;
+  margin-bottom: -0.2em;
+}
+
+.rounded-image {
+  border-radius: 50%;
+  overflow: hidden;
+  object-position: center;
+  padding: 0 0.5em 0 0.5em;
+  vertical-align: middle;
+}
+

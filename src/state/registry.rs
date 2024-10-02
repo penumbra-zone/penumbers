@@ -22,6 +22,20 @@ impl AugmentedMetadata {
     pub fn format_with_symbol(&self, asset: &AssetId, amount: impl Into<Amount>) -> String {
         format!("{} {}", self.format(asset, amount), &self.symbol)
     }
+
+    pub fn image(&self) -> Option<String> {
+        for image in &self.images {
+            if image.png != "" {
+                return Some(image.png.clone());
+            }
+        }
+        for image in &self.images {
+            if image.svg != "" {
+                return Some(image.svg.clone());
+            }
+        }
+        return None;
+    }
 }
 
 type MetadataMap = HashMap<AssetId, AugmentedMetadata>;

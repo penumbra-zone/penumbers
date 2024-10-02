@@ -55,9 +55,14 @@
     <tbody>
     {% for entry in shielded.by_asset %}
     <tr>
-      <th>{{ entry.asset }}</th>
-      <th class="text-right">{{ entry.total }}</th>
-      <th class="text-right">{{ entry.current }}</th>
+      <th>
+        <p class="asset-with-image">
+        <img class="rounded-image" src="{{ entry.image }}" width="32px" height="32px" />
+        <span>{{ entry.asset }}</span>
+        </p>
+      </th>
+      <th class="text-right" style="vertical-align: middle">{{ entry.total }}</th>
+      <th class="text-right" style="vertical-align: middle">{{ entry.current }}</th>
     </tr>
     {% endfor %}
     </tbody>
@@ -73,8 +78,13 @@
     <tbody>
     {% for entry in unshielded.by_asset %}
     <tr>
-      <th>{{ entry.asset }}</th>
-      <th class="text-right">{{ entry.current }}</th>
+      <th>
+        <p class="asset-with-image">
+        <img class="rounded-image" src="{{ entry.image }}" width="32px" height="32px" />
+        <span>{{ entry.asset }}</span>
+        </p>
+      </th>
+      <th class="text-right" style="vertical-align: middle">{{ entry.current }}</th>
     </tr>
     {% endfor %}
     </tbody>
