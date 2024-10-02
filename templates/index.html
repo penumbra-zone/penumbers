@@ -45,19 +45,19 @@
     </table>
   </div>
   <div class="info-table">
-    <h1>deposits</h1>
+    <h1>shielded value</h1>
     <table>
     <thead>
       <th>asset</th>
       <th>current</th>
-      <th>cumulative</th>
+      <th>total</th>
     </thead>
     <tbody>
-    {% for deposit in asset_deposits.deposits %}
+    {% for entry in shielded.by_asset %}
     <tr>
-      <th>{{ deposit.asset }}</th>
-      <th class="text-right">{{ deposit.current }}</th>
-      <th class="text-right">{{ deposit.cumulative }}</th>
+      <th>{{ entry.asset }}</th>
+      <th class="text-right">{{ entry.current }}</th>
+      <th class="text-right">{{ entry.total }}</th>
     </tr>
     {% endfor %}
     </tbody>

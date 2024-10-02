@@ -81,17 +81,17 @@ pub struct Deposit {
     #[serde_as(as = "DisplayFromStr")]
     pub asset: AssetId,
     #[serde_as(as = "DisplayFromStr")]
-    pub cumulative: Amount,
+    pub total: Amount,
     #[serde_as(as = "DisplayFromStr")]
     pub current: Amount,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct AssetDeposits {
-    pub deposits: Vec<Deposit>,
+pub struct ShieldedValue {
+    pub by_asset: Vec<Deposit>,
 }
 
-impl AssetDeposits {
+impl ShieldedValue {
     async fn fetch(pool: &PgPool) -> anyhow::Result<Self> {
         let out: Vec<(Vec<u8>, String, String)> = sqlx::query_as(
             r#"
@@ -105,7 +105,7 @@ impl AssetDeposits {
         )
         .fetch_all(pool)
         .await?;
-        let deposits = out
+        let by_asset = out
             .into_iter()
             .map(|x| {
                 let current = if x.1.starts_with('-') {
@@ -116,11 +116,11 @@ impl AssetDeposits {
                 Ok(Deposit {
                     asset: AssetId::try_from(x.0.as_slice()).context("failed to parse asset ID")?,
                     current,
-                    cumulative: Amount::try_from(x.2).context("failed to parse cumulative")?,
+                    total: Amount::try_from(x.2).context("failed to parse total")?,
                 })
             })
             .collect::<anyhow::Result<_>>()?;
-        Ok(AssetDeposits { deposits })
+        Ok(ShieldedValue { by_asset })
     }
 }
 
@@ -146,7 +146,7 @@ impl Database {
         Depositors::fetch(&self.pool).await
     }
 
-    pub async fn asset_deposits(&self) -> anyhow::Result<AssetDeposits> {
-        AssetDeposits::fetch(&self.pool).await
+    pub async fn asset_deposits(&self) -> anyhow::Result<ShieldedValue> {
+        ShieldedValue::fetch(&self.pool).await
     }
 }
