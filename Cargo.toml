@@ -16,7 +16,6 @@ penumbra-asset = { git = "https://github.com/penumbra-zone/penumbra", tag = "v0.
 penumbra-keys = { git = "https://github.com/penumbra-zone/penumbra", tag = "v0.80.5" }
 penumbra-num = { git = "https://github.com/penumbra-zone/penumbra", tag = "v0.80.5" }
 penumbra-proto = { git = "https://github.com/penumbra-zone/penumbra", tag = "v0.80.5" }
-penumbra-stake = { git = "https://github.com/penumbra-zone/penumbra", tag = "v0.80.5" }
 pindexer = { git = "https://github.com/penumbra-zone/penumbra", tag = "v0.80.5" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

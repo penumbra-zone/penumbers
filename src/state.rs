@@ -1,7 +1,9 @@
 pub mod database;
+pub mod registry;
 
 use database::Database;
 use minijinja::Environment;
+use registry::Registry;
 use serde::Serialize;
 
 fn create_environment() -> anyhow::Result<Environment<'static>> {
@@ -16,6 +18,7 @@ fn create_environment() -> anyhow::Result<Environment<'static>> {
 #[derive(Debug, Clone)]
 pub struct AppState {
     database: Database,
+    registry: Registry,
     environment: Environment<'static>,
 }
 
@@ -25,9 +28,11 @@ impl AppState {
     /// - `db_url` is used to connect to our postgres database.
     pub async fn create(db_url: &str) -> anyhow::Result<Self> {
         let database = Database::new(db_url).await?;
+        let registry = Registry::from_penumbra_1()?;
         let environment = create_environment()?;
         Ok(Self {
             database,
+            registry,
             environment,
         })
     }
@@ -35,6 +40,10 @@ impl AppState {
     /// Get the database pool associated with this state.
     pub fn database(&self) -> Database {
         self.database.clone()
+    }
+
+    pub fn registry(&self) -> Registry {
+        self.registry.clone()
     }
 
     /// Render a template by name

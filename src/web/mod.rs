@@ -1,6 +1,7 @@
 mod common;
 mod static_files;
 
+use anyhow::anyhow;
 use axum::{
     extract::{MatchedPath, Request, State},
     response::{Html, IntoResponse as _, Response},
@@ -10,11 +11,14 @@ use axum::{
 use common::AcceptsJson;
 use core::net::SocketAddr;
 use serde::Serialize;
+use sqlx::types::BigDecimal;
+use std::str::FromStr;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 
 use crate::state::{
-    database::{ShieldedValue, TotalSupply},
+    database::{Deposit, ShieldedValue, TotalSupply},
+    registry::Registry,
     AppState,
 };
 use crate::{error::Result, state::database::Depositors};
@@ -24,6 +28,85 @@ struct IndexResponse {
     supply: TotalSupply,
     depositors: Depositors,
     shielded: ShieldedValue,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct FormattedSupply {
+    total: String,
+    unstaked: String,
+    staked: String,
+    auction: String,
+    dex: String,
+}
+
+impl FormattedSupply {
+    fn format(registry: &Registry, value: TotalSupply) -> Self {
+        let asset = &*penumbra_asset::STAKING_TOKEN_ASSET_ID;
+        let meta = registry
+            .metadata(asset)
+            .expect("staking token should be in registry");
+        Self {
+            total: meta.format_with_symbol(asset, value.total),
+            unstaked: meta.format_with_symbol(asset, value.unstaked),
+            staked: meta.format_with_symbol(asset, value.staked),
+            auction: meta.format_with_symbol(asset, value.auction),
+            dex: meta.format_with_symbol(asset, value.dex),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct FormattedDeposit {
+    pub asset: String,
+    pub total: String,
+    pub current: String,
+}
+
+impl FormattedDeposit {
+    fn format(registry: &Registry, value: Deposit) -> anyhow::Result<Self> {
+        let meta = registry.metadata(&value.asset);
+        match meta {
+            None => Ok(Self {
+                asset: value.asset.to_string(),
+                total: value.total.to_string(),
+                current: value.current.to_string(),
+            }),
+            Some(meta) => Ok(Self {
+                total: meta.format(&value.asset, value.total),
+                current: meta.format(&value.asset, value.current),
+                asset: meta.symbol.clone(),
+            }),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct FormattedShieldedValue {
+    by_asset: Vec<FormattedDeposit>,
+}
+
+impl FormattedShieldedValue {
+    fn format(registry: &Registry, value: ShieldedValue) -> anyhow::Result<Self> {
+        let mut by_asset: Vec<FormattedDeposit> = value
+            .by_asset
+            .into_iter()
+            .map(|x| FormattedDeposit::format(registry, x))
+            .collect::<anyhow::Result<_>>()?;
+        by_asset.sort_by_key(|x| {
+            (
+                x.asset.starts_with("passet"),
+                std::cmp::Reverse(BigDecimal::from_str(&x.total).ok()),
+            )
+        });
+        Ok(Self { by_asset })
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct FormattedIndexResponse {
+    supply: FormattedSupply,
+    depositors: Depositors,
+    shielded: FormattedShieldedValue,
 }
 
 async fn index_handler(
@@ -51,7 +134,13 @@ async fn index_handler(
     if json {
         Ok(Json(resp).into_response())
     } else {
-        Ok(Html(state.render_template("index.html", resp)?).into_response())
+        let registry = state.registry();
+        let formatted = FormattedIndexResponse {
+            supply: FormattedSupply::format(&registry, resp.supply),
+            depositors: resp.depositors,
+            shielded: FormattedShieldedValue::format(&registry, resp.shielded)?,
+        };
+        Ok(Html(state.render_template("index.html", formatted)?).into_response())
     }
 }
 

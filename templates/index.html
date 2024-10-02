@@ -49,15 +49,15 @@
     <table>
     <thead>
       <th>asset</th>
-      <th>current</th>
       <th>total</th>
+      <th>current</th>
     </thead>
     <tbody>
     {% for entry in shielded.by_asset %}
     <tr>
       <th>{{ entry.asset }}</th>
-      <th class="text-right">{{ entry.current }}</th>
       <th class="text-right">{{ entry.total }}</th>
+      <th class="text-right">{{ entry.current }}</th>
     </tr>
     {% endfor %}
     </tbody>
