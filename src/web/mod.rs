@@ -60,6 +60,7 @@ struct FormattedDeposit {
     pub asset: String,
     pub total: String,
     pub current: String,
+    pub known: bool,
 }
 
 impl FormattedDeposit {
@@ -70,11 +71,13 @@ impl FormattedDeposit {
                 asset: value.asset.to_string(),
                 total: value.total.to_string(),
                 current: value.current.to_string(),
+                known: false,
             }),
             Some(meta) => Ok(Self {
                 total: meta.format(&value.asset, value.total),
                 current: meta.format(&value.asset, value.current),
                 asset: meta.symbol.clone(),
+                known: true,
             }),
         }
     }
@@ -83,22 +86,30 @@ impl FormattedDeposit {
 #[derive(Clone, Debug, Serialize)]
 struct FormattedShieldedValue {
     by_asset: Vec<FormattedDeposit>,
+    unknown_asset: Vec<FormattedDeposit>,
 }
 
 impl FormattedShieldedValue {
     fn format(registry: &Registry, value: ShieldedValue) -> anyhow::Result<Self> {
-        let mut by_asset: Vec<FormattedDeposit> = value
+        let all: Vec<FormattedDeposit> = value
             .by_asset
             .into_iter()
             .map(|x| FormattedDeposit::format(registry, x))
             .collect::<anyhow::Result<_>>()?;
-        by_asset.sort_by_key(|x| {
-            (
-                x.asset.starts_with("passet"),
-                std::cmp::Reverse(BigDecimal::from_str(&x.total).ok()),
-            )
-        });
-        Ok(Self { by_asset })
+        let mut by_asset = Vec::new();
+        let mut unknown_asset = Vec::new();
+        for deposit in all {
+            if deposit.known {
+                by_asset.push(deposit);
+            } else {
+                unknown_asset.push(deposit);
+            }
+        }
+        by_asset.sort_by_key(|x| std::cmp::Reverse(BigDecimal::from_str(&x.total).ok()));
+        Ok(Self {
+            by_asset,
+            unknown_asset,
+        })
     }
 }
 

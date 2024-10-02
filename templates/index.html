@@ -63,6 +63,25 @@
     </tbody>
     </table>
   </div>
+  <div class="info-table">
+    <h1>shielded value (unknown assets)</h1>
+    <table>
+    <thead>
+      <th>asset</th>
+      <th>total</th>
+      <th>current</th>
+    </thead>
+    <tbody>
+    {% for entry in shielded.unknown_asset %}
+    <tr>
+      <th>{{ entry.asset }}</th>
+      <th class="text-right">{{ entry.total }}</th>
+      <th class="text-right">{{ entry.current }}</th>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+  </div>
 </div>
 </body>
 </html>
