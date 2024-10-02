@@ -1,9 +1,13 @@
 use anyhow::anyhow;
+use num_bigint::BigInt;
 use penumbra_asset::asset::{Id as AssetId, Metadata};
 use penumbra_num::Amount;
 use penumbra_proto::core::asset::v1 as pb;
 use serde_json::Value;
+use sqlx::types::BigDecimal;
 use std::{collections::HashMap, str::FromStr, sync::Arc};
+
+const PRECISION: i64 = 4;
 
 /// Represents the metadata we need for nicely formatting assets.
 #[derive(Debug, Clone)]
@@ -16,7 +20,10 @@ pub struct AugmentedMetadata {
 impl AugmentedMetadata {
     pub fn format(&self, _asset: &AssetId, amount: impl Into<Amount>) -> String {
         let amount = amount.into();
-        self.metadata.default_unit().format_value(amount)
+        let exponent = self.metadata.default_unit().exponent();
+        let amount =
+            BigInt::from_str(&format!("{}", amount)).expect("converting amount should not fail");
+        BigDecimal::new(amount, i64::from(exponent)).round(PRECISION).to_string()
     }
 
     pub fn format_with_symbol(&self, asset: &AssetId, amount: impl Into<Amount>) -> String {
