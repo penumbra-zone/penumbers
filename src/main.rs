@@ -44,9 +44,17 @@ async fn main() -> anyhow::Result<()> {
 
     let opt = Options::parse();
 
-    let state = AppState::create(opt.database.as_ref()).await?;
+    let (state, worker) = AppState::create(opt.database.as_ref()).await?;
     let address = SocketAddr::from_str(opt.web.as_ref())?;
 
-    web::WebServer::new(state, address).run().await?;
+    let worker_handle = tokio::spawn(async move { worker.run(5).await });
+    let web_handle = tokio::spawn({
+        let server = web::WebServer::new(state, address);
+        async move { server.run().await }
+    });
+    tokio::select! {
+        x = worker_handle => x??,
+        x = web_handle => x??
+    };
     Ok(())
 }

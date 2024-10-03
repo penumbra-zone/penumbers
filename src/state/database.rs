@@ -1,9 +1,12 @@
-use anyhow::Context;
+use std::time::Duration;
+
+use anyhow::{anyhow, Context};
 use penumbra_asset::asset::Id as AssetId;
 use penumbra_num::Amount;
 use serde::Serialize;
 use serde_with::{serde_as, DisplayFromStr};
 use sqlx::PgPool;
+use tokio::sync::watch;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct TotalSupply {
@@ -196,33 +199,77 @@ impl ShieldedValue {
     }
 }
 
+#[derive(Debug, Clone)]
+struct Snapshot {
+    total_supply: (TotalSupply, TotalSupply),
+    depositors: Depositors,
+    shielded_value: ShieldedValue,
+    unshielded_value: ShieldedValue,
+}
+
+impl Snapshot {
+    async fn fetch(pool: &PgPool) -> anyhow::Result<Self> {
+        Ok(Self {
+            total_supply: TotalSupply::fetch(pool).await?,
+            depositors: Depositors::fetch(pool).await?,
+            shielded_value: ShieldedValue::fetch(pool).await?,
+            unshielded_value: ShieldedValue::fetch_unshielded(pool).await?,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct DatabaseWorker {
+    pool: PgPool,
+    snapshot_tx: watch::Sender<anyhow::Result<Snapshot>>,
+}
+
+impl DatabaseWorker {
+    pub async fn run(self, poll_frequency_seconds: u64) -> anyhow::Result<()> {
+        loop {
+            tokio::time::sleep(Duration::from_secs(poll_frequency_seconds)).await;
+            tracing::info!("updating database snapshot");
+            self.snapshot_tx.send(Snapshot::fetch(&self.pool).await)?;
+        }
+    }
+}
+
 /// A database handle.
 ///
 /// This is efficiently cloneable, internally reference counted.
 #[derive(Clone, Debug)]
 pub struct Database {
-    pool: PgPool,
+    snapshot_rx: watch::Receiver<anyhow::Result<Snapshot>>,
 }
 
 impl Database {
-    pub async fn new(db_url: &str) -> anyhow::Result<Self> {
+    pub async fn new(db_url: &str) -> anyhow::Result<(Self, DatabaseWorker)> {
         let pool = PgPool::connect(db_url).await?;
-        Ok(Self { pool })
+        let snapshot = Snapshot::fetch(&pool).await;
+        let (snapshot_tx, snapshot_rx) = watch::channel(snapshot);
+        Ok((Self { snapshot_rx }, DatabaseWorker { pool, snapshot_tx }))
+    }
+
+    async fn get_snapshot(&self) -> anyhow::Result<Snapshot> {
+        match &*self.snapshot_rx.borrow() {
+            Ok(x) => Ok(x.clone()),
+            Err(e) => Err(anyhow!("{}", e)),
+        }
     }
 
     pub async fn total_supply(&self) -> anyhow::Result<(TotalSupply, TotalSupply)> {
-        TotalSupply::fetch(&self.pool).await
+        Ok(self.get_snapshot().await?.total_supply)
     }
 
     pub async fn depositors(&self) -> anyhow::Result<Depositors> {
-        Depositors::fetch(&self.pool).await
+        Ok(self.get_snapshot().await?.depositors)
     }
 
     pub async fn shielded_value(&self) -> anyhow::Result<ShieldedValue> {
-        ShieldedValue::fetch(&self.pool).await
+        Ok(self.get_snapshot().await?.shielded_value)
     }
 
     pub async fn unshielded_value(&self) -> anyhow::Result<ShieldedValue> {
-        ShieldedValue::fetch_unshielded(&self.pool).await
+        Ok(self.get_snapshot().await?.unshielded_value)
     }
 }

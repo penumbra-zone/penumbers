@@ -1,7 +1,7 @@
 pub mod database;
 pub mod registry;
 
-use database::Database;
+use database::{Database, DatabaseWorker};
 use minijinja::Environment;
 use registry::Registry;
 use serde::Serialize;
@@ -26,15 +26,18 @@ impl AppState {
     /// Create an instance of this state.
     ///
     /// - `db_url` is used to connect to our postgres database.
-    pub async fn create(db_url: &str) -> anyhow::Result<Self> {
-        let database = Database::new(db_url).await?;
+    pub async fn create(db_url: &str) -> anyhow::Result<(Self, DatabaseWorker)> {
+        let (database, worker) = Database::new(db_url).await?;
         let registry = Registry::from_penumbra_1()?;
         let environment = create_environment()?;
-        Ok(Self {
-            database,
-            registry,
-            environment,
-        })
+        Ok((
+            Self {
+                database,
+                registry,
+                environment,
+            },
+            worker,
+        ))
     }
 
     /// Get the database pool associated with this state.
