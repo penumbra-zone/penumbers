@@ -23,7 +23,9 @@ impl AugmentedMetadata {
         let exponent = self.metadata.default_unit().exponent();
         let amount =
             BigInt::from_str(&format!("{}", amount)).expect("converting amount should not fail");
-        BigDecimal::new(amount, i64::from(exponent)).round(PRECISION).to_string()
+        BigDecimal::new(amount, i64::from(exponent))
+            .round(PRECISION)
+            .to_string()
     }
 
     pub fn format_with_symbol(&self, asset: &AssetId, amount: impl Into<Amount>) -> String {
