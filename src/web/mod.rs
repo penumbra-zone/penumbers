@@ -10,6 +10,7 @@ use axum::{
 };
 use common::AcceptsJson;
 use core::net::SocketAddr;
+use penumbra_asset::{asset::Id as AssetId, STAKING_TOKEN_ASSET_ID};
 use serde::Serialize;
 use sqlx::types::BigDecimal;
 use std::str::FromStr;
@@ -26,6 +27,7 @@ use crate::{error::Result, state::database::Depositors};
 #[derive(Debug, Clone, Serialize)]
 struct IndexResponse {
     supply: TotalSupply,
+    usdc_equivalent_supply: TotalSupply,
     depositors: Depositors,
     shielded: ShieldedValue,
     unshielded: ShieldedValue,
@@ -41,8 +43,7 @@ struct FormattedSupply {
 }
 
 impl FormattedSupply {
-    fn format(registry: &Registry, value: TotalSupply) -> Self {
-        let asset = &*penumbra_asset::STAKING_TOKEN_ASSET_ID;
+    fn format(registry: &Registry, asset: &AssetId, value: TotalSupply) -> Self {
         let meta = registry
             .metadata(asset)
             .expect("staking token should be in registry");
@@ -121,6 +122,7 @@ impl FormattedShieldedValue {
 #[derive(Debug, Clone, Serialize)]
 struct FormattedIndexResponse {
     supply: FormattedSupply,
+    usdc_equivalent_supply: FormattedSupply,
     depositors: Depositors,
     shielded: FormattedShieldedValue,
     unshielded: FormattedShieldedValue,
@@ -146,8 +148,10 @@ async fn index_handler(
         let db = state.database();
         async move { db.unshielded_value().await }
     });
+    let (supply, usdc_equivalent_supply) = supply_task.await??;
     let resp = IndexResponse {
-        supply: supply_task.await??,
+        supply,
+        usdc_equivalent_supply,
         depositors: depositors_task.await??,
         shielded: shielded_task.await??,
         unshielded: unshielded_task.await??,
@@ -158,7 +162,14 @@ async fn index_handler(
     } else {
         let registry = state.registry();
         let formatted = FormattedIndexResponse {
-            supply: FormattedSupply::format(&registry, resp.supply),
+            supply: FormattedSupply::format(&registry, &*STAKING_TOKEN_ASSET_ID, resp.supply),
+            usdc_equivalent_supply: FormattedSupply::format(
+                &registry,
+                &AssetId::from_str(
+                    "passet1w6e7fvgxsy6ccy3m8q0eqcuyw6mh3yzqu3uq9h58nu8m8mku359spvulf6",
+                )?,
+                resp.usdc_equivalent_supply,
+            ),
             depositors: resp.depositors,
             shielded: FormattedShieldedValue::format(&registry, resp.shielded)?,
             unshielded: FormattedShieldedValue::format(&registry, resp.unshielded)?,

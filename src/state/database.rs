@@ -15,15 +15,20 @@ pub struct TotalSupply {
 }
 
 impl TotalSupply {
-    pub async fn fetch(pool: &PgPool) -> anyhow::Result<Self> {
-        let row: (i64, i64, i64, i64, i64) = sqlx::query_as(
+    pub async fn fetch(pool: &PgPool) -> anyhow::Result<(Self, Self)> {
+        let row: (i64, i64, i64, i64, i64, i64, i64, i64, i64, i64) = sqlx::query_as(
             r#"
             SELECT 
                 (staked_um + unstaked_um + auction + dex)::BIGINT as total,
                 staked_um::BIGINT,
                 (unstaked_um + auction + dex)::BIGINT,
                 auction::BIGINT,
-                dex::BIGINT
+                dex::BIGINT,
+                ((staked_um + unstaked_um + auction + dex)::NUMERIC * price)::BIGINT as total,
+                (staked_um::NUMERIC * price)::BIGINT,
+                ((unstaked_um + auction + dex)::NUMERIC * price)::BIGINT,
+                (auction::NUMERIC * price)::BIGINT,
+                (dex::NUMERIC * price)::BIGINT
             FROM (
               SELECT SUM(um) as staked_um
               FROM (
@@ -44,17 +49,49 @@ impl TotalSupply {
               ORDER BY HEIGHT DESC
               LIMIT 1
             ) on TRUE
+            LEFT JOIN LATERAL (
+                SELECT AVG(price21) as price FROM (
+                    (SELECT 
+                        price21 
+                    FROM dex_lp 
+                    WHERE state = 'opened'
+                    AND asset1 = '\x76b3e4b10681358c123b381f90638476b7789040e47802de879f0fb3eedc8d0b' 
+                    AND asset2 = '\x29ea9c2f3371f6a487e7e95c247041f4a356f983eb064e5d2b3bcf322ca96a10' 
+                    AND reserves1 > 0 
+                    ORDER BY price21 DESC
+                    LIMIT 1)
+                    UNION ALL
+                    (SELECT 
+                        price21 
+                    FROM dex_lp 
+                    WHERE state = 'opened'
+                    AND asset1 = '\x76b3e4b10681358c123b381f90638476b7789040e47802de879f0fb3eedc8d0b' 
+                    AND asset2 = '\x29ea9c2f3371f6a487e7e95c247041f4a356f983eb064e5d2b3bcf322ca96a10' 
+                    AND reserves2 > 0 
+                    ORDER BY price21 ASC
+                    LIMIT 1)
+                )
+            ) on TRUE
         "#,
         )
         .fetch_one(pool)
         .await?;
-        Ok(Self {
-            total: row.0.try_into()?,
-            staked: row.1.try_into()?,
-            unstaked: row.2.try_into()?,
-            auction: row.3.try_into()?,
-            dex: row.4.try_into()?,
-        })
+        Ok((
+            Self {
+                total: row.0.try_into()?,
+                staked: row.1.try_into()?,
+                unstaked: row.2.try_into()?,
+                auction: row.3.try_into()?,
+                dex: row.4.try_into()?,
+            },
+            Self {
+                total: row.5.try_into()?,
+                staked: row.6.try_into()?,
+                unstaked: row.7.try_into()?,
+                auction: row.8.try_into()?,
+                dex: row.9.try_into()?,
+            },
+        ))
     }
 }
 
@@ -173,7 +210,7 @@ impl Database {
         Ok(Self { pool })
     }
 
-    pub async fn total_supply(&self) -> anyhow::Result<TotalSupply> {
+    pub async fn total_supply(&self) -> anyhow::Result<(TotalSupply, TotalSupply)> {
         TotalSupply::fetch(&self.pool).await
     }
 
