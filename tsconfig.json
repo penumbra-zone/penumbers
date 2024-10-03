@@ -19,6 +19,7 @@
     "target": "ES2022",
     "strict": true,
     "allowJs": true,
+    "incremental": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
