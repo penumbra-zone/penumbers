@@ -13,6 +13,7 @@
   "dependencies": {
     "@penumbra-labs/registry": "^11.3.1",
     "@penumbra-zone/protobuf": "^6.1.0",
+    "@penumbra-zone/types": "^24.0.0",
     "@penumbra-zone/ui": "^10.0.2",
     "@remix-run/node": "^2.12.1",
     "@remix-run/react": "^2.12.1",

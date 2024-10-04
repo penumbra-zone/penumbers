@@ -2,6 +2,7 @@ export interface Schema {
   supply_total_unstaked: SupplyTotalUnstakedTable;
   supply_total_staked: SupplyTotalStakedTable;
   ibc_transfer: IbcTransferTable;
+  dex_lp: DexLPTable;
 }
 
 export interface SupplyTotalUnstakedTable {
@@ -52,4 +53,27 @@ export interface IbcTransferTable {
   foreign_addr: string;
   /** What kind of transfer is this? */
   kind: IbcTransferKind;
+}
+
+export interface DexLPTable {
+  /** The position identifier. */
+  id: Uint8Array;
+  /** The current state of the position */
+  state: "opened" | "closed" | `withdrawn_${number}`;
+  /** The first asset in this trading pair. */
+  asset1: Uint8Array;
+  /** The second asset in this trading pair. */
+  asset2: Uint8Array;
+  p: bigint;
+  q: bigint;
+  /** How much of asset 2 you get for a unit of asset 1. */
+  price12: string;
+  /** How much of asset 1 you get for a unit of asset 2. */
+  price21: string;
+  /** Whether or not the position will be closed when its initial reserves are taken. */
+  close_on_fill: boolean;
+  /** How much of the first asset is in the position. */
+  reserves1: bigint;
+  /** How much of the second asset is in the position. */
+  reserves2: bigint;
 }
