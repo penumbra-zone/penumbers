@@ -16,7 +16,6 @@ import { multiplyAmountByNumber } from "@penumbra-zone/types/amount";
 import { PenumbraUIProvider } from "@penumbra-zone/ui/PenumbraUIProvider";
 import { ValueViewComponent } from "@penumbra-zone/ui/ValueViewComponent";
 import { Grid } from "@penumbra-zone/ui/Grid";
-import { Text } from "@penumbra-zone/ui/Text";
 import { Card } from "@penumbra-zone/ui/Card";
 import { Density } from "@penumbra-zone/ui/Density";
 import { getFormattedAmtFromValueView } from "@penumbra-zone/types/value-view";
@@ -154,7 +153,7 @@ const ShowTotalSupply = ({
         <Table.Tbody>
           {Object.keys(um).map((k) => {
             return (
-              <Table.Tr>
+              <Table.Tr key={k}>
                 <Table.Th>{k}</Table.Th>
                 <Table.Td>
                   <ValueViewComponent valueView={(um as any)[k]} />
@@ -269,9 +268,9 @@ const ShowShielded = ({ shielded }: { shielded: Shielded[] }) => {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {arr.map((x) => {
+          {arr.map((x, i) => {
             return (
-              <Table.Tr>
+              <Table.Tr key={i}>
                 <Table.Td>
                   <ValueViewComponent valueView={x.total} />
                 </Table.Td>
@@ -325,10 +324,6 @@ export const loader = async (): Promise<Data> => {
 export const meta: MetaFunction = () => {
   return [{ title: "Penumbra Insights" }];
 };
-
-interface SupplyProps {
-  total: Amount;
-}
 
 export default function Index() {
   const raw = useLoaderData<Jsonified<Data>>();
