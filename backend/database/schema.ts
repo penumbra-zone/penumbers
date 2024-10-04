@@ -1,6 +1,7 @@
 export interface Schema {
   supply_total_unstaked: SupplyTotalUnstakedTable;
   supply_total_staked: SupplyTotalStakedTable;
+  ibc_transfer: IbcTransferTable;
 }
 
 export interface SupplyTotalUnstakedTable {
@@ -29,4 +30,26 @@ export interface SupplyTotalStakedTable {
   del_um: bigint;
   /** The current exchange rate from del_um -> um, multiplied by 10^8. */
   rate_bps2: bigint;
+}
+
+type IbcTransferKind =
+  | "inbound"
+  | "outbound"
+  | "refund_timeout"
+  | "refund_error"
+  | "refund_other";
+
+export interface IbcTransferTable {
+  /** Internal identifier for the transfer. */
+  id: number;
+  /** The identifier for the asset being transferred. */
+  asset: Uint8Array;
+  /** The amount being transferred, as a string. */
+  amount: string;
+  /** The penumbra address involved in the transfer. */
+  penumbra_addr: Uint8Array;
+  /** The foreign address involved in the transfer. */
+  foreign_addr: string;
+  /** What kind of transfer is this? */
+  kind: IbcTransferKind;
 }

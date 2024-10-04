@@ -1,3 +1,4 @@
+import { Table } from "@penumbra-zone/ui/Table";
 import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Database, db, Schema } from "backend/database";
@@ -25,7 +26,39 @@ export const loader = async () => {
     .select(({ fn }) => fn.sum<bigint>("staked.um").as("um"))
     .executeTakeFirstOrThrow();
 
-  const [unstaked, staked] = await Promise.all([unstakedP, stakedP]);
+  const depositorsP = db
+    .selectFrom("ibc_transfer")
+    .select(({ fn }) =>
+      fn.count<number>("foreign_addr").distinct().as("depositors")
+    )
+    .where("kind", "=", "inbound")
+    .executeTakeFirstOrThrow();
+
+  const shieldedP = db
+    .selectFrom("ibc_transfer")
+    .select((eb) => [
+      "asset",
+      eb.fn.sum<bigint>("amount").as("current"),
+      eb.fn
+        .sum<bigint>(
+          eb
+            .case()
+            .when("kind", "=", "inbound")
+            .then(eb.ref("amount"))
+            .else(0n)
+            .end()
+        )
+        .as("total"),
+    ])
+    .groupBy("asset")
+    .execute();
+
+  const [unstaked, staked, { depositors }, shielded] = await Promise.all([
+    unstakedP,
+    stakedP,
+    depositorsP,
+    shieldedP,
+  ]);
   return typedjson({
     total_supply: {
       total: unstaked.um + staked.um + unstaked.auction + unstaked.dex,
@@ -34,6 +67,8 @@ export const loader = async () => {
       auction: unstaked.auction,
       dex: unstaked.dex,
     },
+    depositors,
+    shielded,
   });
 };
 
@@ -45,11 +80,6 @@ export default function Index() {
   const data = useTypedLoaderData<typeof loader>();
   return (
     <div className="flex flex-col h-screen items-center justify-center">
-      <p>total: {`${data.total_supply.total}`}</p>
-      <p>unstaked: {`${data.total_supply.unstaked}`}</p>
-      <p>staked: {`${data.total_supply.staked}`}</p>
-      <p>auction: {`${data.total_supply.auction}`}</p>
-      <p>dex: {`${data.total_supply.dex}`}</p>
     </div>
   );
 }
