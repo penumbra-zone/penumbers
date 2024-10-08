@@ -1,10 +1,24 @@
 import pkg from "pg";
 const { Pool, types } = pkg;
+import fs from 'fs';
 import { Kysely, PostgresDialect } from "kysely";
 import { Schema } from "./schema";
 
+const ca = process.env.PENUMBRA_INDEXER_CA_CERT;
+const connectionString = process.env.PENUMBRA_INDEXER_ENDPOINT;
+const dbConfig = {
+  connectionString: connectionString,
+  ...(ca && {
+    ssl: {
+      rejectUnauthorized: true,
+      ca: ca.startsWith('-----BEGIN CERTIFICATE-----')
+        ? ca
+        : fs.readFileSync(ca, 'utf-8'),
+    },
+  }),
+};
 const dialect = new PostgresDialect({
-  pool: new Pool({ connectionString: process.env["DB_URL"] }),
+  pool: new Pool(dbConfig),
 });
 
 export type Database = Kysely<Schema>;

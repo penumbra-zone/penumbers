@@ -1,0 +1,13 @@
+# ignore everything by default
+**
+
+# allow js files
+!*.json
+!*.yaml
+!*.js
+!*.ts
+
+# allow project source code
+!backend/
+!app/
+!public/
