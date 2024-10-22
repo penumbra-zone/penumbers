@@ -11,7 +11,7 @@ on:
   workflow_call:
   workflow_dispatch:
 jobs:
-  penumbra:
+  penumbers:
     runs-on: buildjet-16vcpu-ubuntu-2204
     permissions:
       contents: read
@@ -43,7 +43,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/penumbra-zone/p3numb3rs
+          images: ghcr.io/penumbra-zone/penumbers
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

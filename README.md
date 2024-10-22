@@ -1,4 +1,4 @@
-# p3numb3rs
+# penumbers
 
 The `penumbers` code leverages [pindexer] to display user metrics
 about [Penumbra] network activity.
@@ -18,7 +18,7 @@ However, you still need a database to connect to.
 
 ## Connecting to a database
 
-The p3numb3rs application requires a PostgreSQL database containing ABCI event information
+The penumbers application requires a PostgreSQL database containing ABCI event information
 as written by [pindexer].
 You can set up a local devnet by following the [Penumbra devnet quickstart guide](https://guide.penumbra.zone/dev/devnet-quickstart),
 or plug in credentials for an already running database via environment variables:
@@ -41,7 +41,7 @@ See context in https://github.com/penumbra-zone/dex-explorer/issues/55. After co
 
 ## Deployment
 
-Merges to main will automatically build a container, hosted at `ghcr.io/penumbra-zone/p3numb3rs`.
+Merges to main will automatically build a container, hosted at `ghcr.io/penumbra-zone/penumbers`.
 In order to run the application, you'll need to [deploy a Penumbra fullnode](https://guide.penumbra.zone/node/pd/running-node),
 with [ABCI event indexing enabled](https://guide.penumbra.zone/node/pd/indexing-events).
 Furthermore, you'll need to run [`pindexer`] and provide read-only access to that database to the application.
