@@ -283,7 +283,7 @@ const ShowShielded = ({
           {sorted.map((x, i) => (
             <Table.Tr key={i}>
               <Table.Th>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-y-2">
                   <ValueViewComponent valueView={x.now.total} />
                   <ValueViewComponent valueView={x.now.current} />
                 </div>
