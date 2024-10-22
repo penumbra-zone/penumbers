@@ -16,7 +16,8 @@
             file
             jq
             just
-            pnpm
+            # pnpm
+            nodejs_20
             postgresql
           ];
         };

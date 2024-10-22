@@ -1,6 +1,6 @@
 # Provide specific arg for setting the version of nodejs to use.
-# Should match what's in .nvmrc for development.
-ARG NODE_MAJOR_VERSION=18.20
+# Should match what's in flake.nix for development.
+ARG NODE_MAJOR_VERSION=20
 FROM docker.io/node:${NODE_MAJOR_VERSION}-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
@@ -9,8 +9,11 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies
-COPY package.json package-lock.json pnpm-lock.yaml* ./
-RUN corepack enable pnpm && pnpm install  --frozen-lockfile
+COPY package.json package-lock.json ./
+# Right now the repo prefers `npm` rather than `pnpm`
+# COPY package.json pnpm-lock.yaml* ./
+# RUN corepack enable pnpm && pnpm install --frozen-lockfile
+RUN npm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder

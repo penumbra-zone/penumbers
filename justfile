@@ -3,8 +3,8 @@
 
 # run the app locally with live reload, via pnpm
 dev:
-  pnpm install
-  pnpm dev
+  npm install
+  npm run dev
 
 # build container image
 container:
