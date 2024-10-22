@@ -2,7 +2,7 @@ import { Table } from "@penumbra-zone/ui/Table";
 import type { MetaFunction } from "@remix-run/node";
 import { Database, db, Schema } from "backend/database";
 import { QueryCreator } from "kysely";
-import { splitLoHi } from "@penumbra-zone/types/lo-hi";
+import { joinLoHi, splitLoHi } from "@penumbra-zone/types/lo-hi";
 import {
   AssetId,
   Metadata,
@@ -13,7 +13,11 @@ import { Amount } from "@penumbra-zone/protobuf/penumbra/core/num/v1/num_pb";
 import { useLoaderData } from "@remix-run/react";
 import { Jsonified } from "@penumbra-zone/types/jsonified";
 import { ChainRegistryClient, Registry } from "@penumbra-labs/registry";
-import { multiplyAmountByNumber } from "@penumbra-zone/types/amount";
+import {
+  joinLoHiAmount,
+  multiplyAmountByNumber,
+  subtractAmounts,
+} from "@penumbra-zone/types/amount";
 import { PenumbraUIProvider } from "@penumbra-zone/ui/PenumbraUIProvider";
 import { ValueViewComponent } from "@penumbra-zone/ui/ValueViewComponent";
 import { Grid } from "@penumbra-zone/ui/Grid";
@@ -21,6 +25,10 @@ import { Card } from "@penumbra-zone/ui/Card";
 import { Density } from "@penumbra-zone/ui/Density";
 import { getFormattedAmtFromValueView } from "@penumbra-zone/types/value-view";
 import { Display } from "@penumbra-zone/ui/Display";
+import { TediousRequest } from "kysely";
+import { DropdownMenu } from "@penumbra-zone/ui/DropdownMenu";
+import { Button } from "@penumbra-zone/ui/Button";
+import { useState } from "react";
 
 function knownValueView(metadata: Metadata, amount: Amount): ValueView {
   return new ValueView({
@@ -247,15 +255,53 @@ const ShowSupply = ({ supply }: { supply: Supply }) => {
           </Table.Tr>
           <Table.Tr>
             <Table.Th>{"price"}</Table.Th>
-            <Table.Td>{supply.price}</Table.Td>
+            <Table.Td>${supply.price.toLocaleString("en-us")}</Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Th>{"market_cap"}</Table.Th>
-            <Table.Td>{supply.market_cap}</Table.Td>
+            <Table.Td>
+              ${(supply.market_cap / 1000).toLocaleString("en-us")}
+            </Table.Td>
           </Table.Tr>
         </Table.Tbody>
       </Table>
     </Card>
+  );
+};
+
+const ValueViewChange = ({
+  then,
+  now,
+  foo,
+}: {
+  then: ValueView;
+  now: ValueView;
+  foo: string;
+}) => {
+  const thenValue = then.valueView.value;
+  const nowValue = now.valueView.value;
+  if (!thenValue || !nowValue) {
+    throw new Error("cannot display values");
+  }
+  const thenAmount = joinLoHiAmount(thenValue.amount!);
+  const nowAmount = joinLoHiAmount(nowValue.amount!);
+  const positive = nowAmount >= thenAmount;
+  const change = positive ? nowAmount - thenAmount : thenAmount - nowAmount;
+  const changeAmount = new Amount(splitLoHi(change));
+  const newValue = new ValueView({ valueView: now.valueView }).clone();
+  newValue.valueView.value!.amount = changeAmount;
+  const formatted = getFormattedAmtFromValueView(newValue, true);
+  const sign = positive ? "+" : "-";
+  return (
+    <span
+      className={
+        positive
+          ? change === 0n
+            ? "text-gray-400"
+            : "text-green-400"
+          : "text-red-400"
+      }
+    >{`${sign}${formatted}`}</span>
   );
 };
 
@@ -270,13 +316,79 @@ const ShowShielded = ({
       : b.now.priority - a.now.priority,
   );
 
+  const [changeWindow, setChangeWindow] = useState("24h");
+  const [depositorsWindow, setDepositorsWindow] = useState("∞");
+
+  const getDepositors = (x: ShieldedPoolTimedSnapshots) => {
+    const now = x.now.unique_depositors;
+    if (depositorsWindow === "24h") {
+      return now - x.h24.unique_depositors;
+    }
+    if (depositorsWindow === "7d") {
+      return now - x.d7.unique_depositors;
+    }
+    if (depositorsWindow === "30d") {
+      return now - x.d30.unique_depositors;
+    }
+    return now;
+  };
+  const getChange = (x: ShieldedPoolTimedSnapshots) => {
+    if (changeWindow === "24h") {
+      return x.h24;
+    }
+    if (changeWindow === "7d") {
+      return x.d7;
+    }
+    if (changeWindow === "30d") {
+      return x.d30;
+    }
+    throw new Error(`impossible changeWindow: ${changeWindow}`);
+  };
+
   return (
     <Card title="Shielded Pool">
       <Table>
         <Table.Thead>
           <Table.Tr>
             <Table.Th>total / current </Table.Th>
-            <Table.Th>depositors</Table.Th>
+            <Table.Th>
+              <DropdownMenu>
+                <DropdownMenu.Trigger>
+                  <Button>Change {changeWindow}</Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content>
+                  <DropdownMenu.RadioGroup
+                    value={changeWindow}
+                    onChange={setChangeWindow}
+                  >
+                    {["24h", "7d", "30d"].map((x) => (
+                      <DropdownMenu.RadioItem value={x} key={x}>
+                        {x}
+                      </DropdownMenu.RadioItem>
+                    ))}
+                  </DropdownMenu.RadioGroup>
+                </DropdownMenu.Content>
+              </DropdownMenu>
+            </Table.Th>
+            <Table.Th>
+              <DropdownMenu>
+                <DropdownMenu.Trigger>
+                  <Button>Depositors {depositorsWindow}</Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content>
+                  <DropdownMenu.RadioGroup
+                    value={depositorsWindow}
+                    onChange={setDepositorsWindow}
+                  >
+                    {["∞", "24h", "7d", "30d"].map((x) => (
+                      <DropdownMenu.RadioItem value={x} key={x}>
+                        {x}
+                      </DropdownMenu.RadioItem>
+                    ))}
+                  </DropdownMenu.RadioGroup>
+                </DropdownMenu.Content>
+              </DropdownMenu>
+            </Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
@@ -288,7 +400,21 @@ const ShowShielded = ({
                   <ValueViewComponent valueView={x.now.current} />
                 </div>
               </Table.Th>
-              <Table.Th>{x.now.unique_depositors}</Table.Th>
+              <Table.Th>
+                <div className="flex flex-col gap-y-2">
+                  <ValueViewChange
+                    now={x.now.total}
+                    then={getChange(x).total}
+                    foo={changeWindow}
+                  />
+                  <ValueViewChange
+                    now={x.now.current}
+                    then={getChange(x).current}
+                    foo={changeWindow}
+                  />
+                </div>
+              </Table.Th>
+              <Table.Th>{getDepositors(x)}</Table.Th>
             </Table.Tr>
           ))}
         </Table.Tbody>
@@ -304,6 +430,22 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const raw = useLoaderData<Jsonified<Data>>();
   const data = Data.fromJson(raw);
+  console.log(
+    JSON.stringify(
+      data.shieldedPool
+        .filter(
+          (x) =>
+            x.now.current.valueView.case === "knownAssetId" &&
+            x.now.current.valueView.value.metadata!.symbol === "USDC",
+        )
+        .map((x) => [
+          x.now.current.valueView.value?.amount,
+          x.h24.current.valueView.value?.amount,
+          x.d7.current.valueView.value?.amount,
+          x.d30.current.valueView.value?.amount,
+        ]),
+    ),
+  );
   return (
     <PenumbraUIProvider>
       <Display>
