@@ -1,6 +1,7 @@
 export interface Schema {
   insights_shielded_pool: ShieldedPoolTable;
   insights_supply: SupplyTable;
+  block_details: BlockDetails;
 }
 
 export interface ShieldedPoolTable {
@@ -27,4 +28,10 @@ export interface SupplyTable {
   price: number;
   /** price * total. */
   market_cap: number;
+}
+
+export interface BlockDetails {
+  height: bigint;
+  root: Uint8Array;
+  timestamp: Date;
 }

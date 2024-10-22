@@ -82,12 +82,19 @@ class ShieldedPoolSnapshot {
   static async fetchKnownAssets(
     db: Database,
     registry: Registry,
+    time: Date,
   ): Promise<ShieldedPoolSnapshot[]> {
     const rows = await db
       .selectFrom("insights_shielded_pool")
       .distinctOn("asset_id")
       .select(["asset_id", "total_value", "current_value", "unique_depositors"])
-      .orderBy(["asset_id", "height desc"])
+      .innerJoin(
+        "block_details",
+        "insights_shielded_pool.height",
+        "block_details.height",
+      )
+      .orderBy(["asset_id", "block_details.height desc"])
+      .where("timestamp", "<=", time)
       .execute();
     const out: ShieldedPoolSnapshot[] = [];
     for (const row of rows) {
@@ -126,16 +133,85 @@ class ShieldedPoolSnapshot {
   }
 }
 
+class ShieldedPoolTimedSnapshots {
+  constructor(
+    public now: ShieldedPoolSnapshot,
+    public h24: ShieldedPoolSnapshot,
+    public d7: ShieldedPoolSnapshot,
+    public d30: ShieldedPoolSnapshot,
+  ) {}
+
+  static async fetch(
+    db: Database,
+    registry: Registry,
+  ): Promise<ShieldedPoolTimedSnapshots[]> {
+    const now = new Date();
+    const ago24h = new Date(now.getTime());
+    ago24h.setHours(ago24h.getHours() - 24);
+    const ago7d = new Date(now.getTime());
+    ago7d.setDate(ago7d.getDate() - 7);
+    const ago30d = new Date(now.getTime());
+    ago30d.setDate(ago30d.getDate() - 30);
+
+    const [arr, arr24h, arr7d, arr30d] = await Promise.all(
+      [now, ago24h, ago7d, ago30d].map((x) =>
+        ShieldedPoolSnapshot.fetchKnownAssets(db, registry, x),
+      ),
+    );
+    // Convert a list for each time into a list containing a value for each time, per asset.
+    const partialSnapshots: Map<
+      string,
+      Partial<ShieldedPoolTimedSnapshots>
+    > = new Map();
+    for (const [k, list] of Object.entries({
+      now: arr,
+      h24: arr24h,
+      d7: arr7d,
+      d30: arr30d,
+    })) {
+      for (const snapshot of list) {
+        if (snapshot.total.valueView.case !== "knownAssetId") {
+          continue;
+        }
+        const id = snapshot.total.valueView.value.metadata!.base;
+        const object = partialSnapshots.get(id) ?? {};
+        object[k as keyof ShieldedPoolTimedSnapshots] = snapshot;
+        partialSnapshots.set(id, object);
+      }
+    }
+    const out = [];
+    for (const x of partialSnapshots.values()) {
+      if (!x.d7 || !x.d30 || !x.h24 || !x.now) {
+        continue;
+      }
+      out.push(new ShieldedPoolTimedSnapshots(x.now, x.h24, x.d7, x.d30));
+    }
+
+    return out;
+  }
+
+  static fromJson(
+    data: Jsonified<ShieldedPoolTimedSnapshots>,
+  ): ShieldedPoolTimedSnapshots {
+    return new ShieldedPoolTimedSnapshots(
+      ShieldedPoolSnapshot.fromJson(data.now),
+      ShieldedPoolSnapshot.fromJson(data.h24),
+      ShieldedPoolSnapshot.fromJson(data.d7),
+      ShieldedPoolSnapshot.fromJson(data.d30),
+    );
+  }
+}
+
 class Data {
   constructor(
     public supply: Supply,
-    public shieldedPool: ShieldedPoolSnapshot[],
+    public shieldedPool: ShieldedPoolTimedSnapshots[],
   ) {}
 
   static async fetch(db: Database, registry: Registry): Promise<Data> {
     const [supply, shieldedPool] = await Promise.all([
       Supply.fetch(db, registry),
-      ShieldedPoolSnapshot.fetchKnownAssets(db, registry),
+      ShieldedPoolTimedSnapshots.fetch(db, registry),
     ]);
     return new Data(supply, shieldedPool);
   }
@@ -143,7 +219,7 @@ class Data {
   static fromJson(data: Jsonified<Data>): Data {
     return new Data(
       Supply.fromJson(data.supply),
-      data.shieldedPool.map(ShieldedPoolSnapshot.fromJson),
+      data.shieldedPool.map(ShieldedPoolTimedSnapshots.fromJson),
     );
   }
 }
@@ -183,11 +259,15 @@ const ShowSupply = ({ supply }: { supply: Supply }) => {
   );
 };
 
-const ShowShielded = ({ shielded }: { shielded: ShieldedPoolSnapshot[] }) => {
+const ShowShielded = ({
+  shielded,
+}: {
+  shielded: ShieldedPoolTimedSnapshots[];
+}) => {
   const sorted = [...shielded].sort((a, b) =>
-    a.priority === b.priority
-      ? b.unique_depositors - a.unique_depositors
-      : b.priority - a.priority,
+    a.now.priority === b.now.priority
+      ? b.now.unique_depositors - a.now.unique_depositors
+      : b.now.priority - a.now.priority,
   );
 
   return (
@@ -195,8 +275,7 @@ const ShowShielded = ({ shielded }: { shielded: ShieldedPoolSnapshot[] }) => {
       <Table>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>total</Table.Th>
-            <Table.Th>current</Table.Th>
+            <Table.Th>total / current </Table.Th>
             <Table.Th>depositors</Table.Th>
           </Table.Tr>
         </Table.Thead>
@@ -204,12 +283,12 @@ const ShowShielded = ({ shielded }: { shielded: ShieldedPoolSnapshot[] }) => {
           {sorted.map((x, i) => (
             <Table.Tr key={i}>
               <Table.Th>
-                <ValueViewComponent valueView={x.total} />
+                <div className="flex flex-col gap-1">
+                  <ValueViewComponent valueView={x.now.total} />
+                  <ValueViewComponent valueView={x.now.current} />
+                </div>
               </Table.Th>
-              <Table.Th>
-                <ValueViewComponent valueView={x.current} />
-              </Table.Th>
-              <Table.Th>{x.unique_depositors}</Table.Th>
+              <Table.Th>{x.now.unique_depositors}</Table.Th>
             </Table.Tr>
           ))}
         </Table.Tbody>
