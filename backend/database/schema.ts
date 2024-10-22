@@ -1,79 +1,30 @@
 export interface Schema {
-  supply_total_unstaked: SupplyTotalUnstakedTable;
-  supply_total_staked: SupplyTotalStakedTable;
-  ibc_transfer: IbcTransferTable;
-  dex_lp: DexLPTable;
+  insights_shielded_pool: ShieldedPoolTable;
+  insights_supply: SupplyTable;
 }
 
-export interface SupplyTotalUnstakedTable {
-  /** The height for this supply information. */
+export interface ShieldedPoolTable {
+  /** The height of this information. */
   height: bigint;
-  /** The amount of UM not in any other location (at this height). */
-  um: bigint;
-  /** The amount of UM in the auction component (at this height). */
-  auction: bigint;
-  /** The amount of UM in the dex component (at this height). */
-  dex: bigint;
-  /** The amount of UM locked away through protocol arb execution (up to this height). */
-  arb: bigint;
-  /** The amount of UM locked away through fees (up to this height). */
-  fees: bigint;
+  /** The asset being shielded. */
+  asset_id: Uint8Array;
+  /** Total amount of this asset ever shielded. */
+  total_value: string;
+  /** The current value in the shielded pool. */
+  current_value: string;
+  /** The number of unique depositors for this asset. */
+  unique_depositors: number;
 }
 
-export interface SupplyTotalStakedTable {
-  /** Internal identifier for the validator. */
-  validator_id: number;
-  /** The height for this supply information. */
+export interface SupplyTable {
+  /** The height of this information. */
   height: bigint;
-  /** The UM equivalent value of this validator's staking token. */
-  um: bigint;
-  /** The total amount of the delegation token staked with this validator. */
-  del_um: bigint;
-  /** The current exchange rate from del_um -> um, multiplied by 10^8. */
-  rate_bps2: bigint;
-}
-
-type IbcTransferKind =
-  | "inbound"
-  | "outbound"
-  | "refund_timeout"
-  | "refund_error"
-  | "refund_other";
-
-export interface IbcTransferTable {
-  /** Internal identifier for the transfer. */
-  id: number;
-  /** The identifier for the asset being transferred. */
-  asset: Uint8Array;
-  /** The amount being transferred, as a string. */
-  amount: string;
-  /** The penumbra address involved in the transfer. */
-  penumbra_addr: Uint8Array;
-  /** The foreign address involved in the transfer. */
-  foreign_addr: string;
-  /** What kind of transfer is this? */
-  kind: IbcTransferKind;
-}
-
-export interface DexLPTable {
-  /** The position identifier. */
-  id: Uint8Array;
-  /** The current state of the position */
-  state: "opened" | "closed" | `withdrawn_${number}`;
-  /** The first asset in this trading pair. */
-  asset1: Uint8Array;
-  /** The second asset in this trading pair. */
-  asset2: Uint8Array;
-  p: bigint;
-  q: bigint;
-  /** How much of asset 2 you get for a unit of asset 1. */
-  price12: string;
-  /** How much of asset 1 you get for a unit of asset 2. */
-  price21: string;
-  /** Whether or not the position will be closed when its initial reserves are taken. */
-  close_on_fill: boolean;
-  /** How much of the first asset is in the position. */
-  reserves1: bigint;
-  /** How much of the second asset is in the position. */
-  reserves2: bigint;
+  /** The total amount of the native token in existence. */
+  total: bigint;
+  /** Of this amount, how much is currently staked. */
+  staked: bigint;
+  /** The current price of the native token, in dollars. */
+  price: number;
+  /** price * total. */
+  market_cap: number;
 }
