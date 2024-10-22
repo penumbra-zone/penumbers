@@ -260,7 +260,7 @@ const ShowSupply = ({ supply }: { supply: Supply }) => {
           <Table.Tr>
             <Table.Th>{"market_cap"}</Table.Th>
             <Table.Td>
-              ${(supply.market_cap / 1000).toLocaleString("en-us")}
+              ${(supply.market_cap / 1_000_000).toLocaleString("en-us")}
             </Table.Td>
           </Table.Tr>
         </Table.Tbody>
