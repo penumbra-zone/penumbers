@@ -46,14 +46,12 @@ class Supply {
   constructor(
     public total: ValueView,
     public staked_percentage: number,
-    public price: number,
-    public market_cap: number,
   ) {}
 
   static async fetch(db: Database, registry: Registry): Promise<Supply> {
-    const { total, staked, price, market_cap } = await db
+    const { total, staked } = await db
       .selectFrom("insights_supply")
-      .select(["total", "staked", "price", "market_cap"])
+      .select(["total", "staked"])
       .orderBy("height desc")
       .limit(1)
       .executeTakeFirstOrThrow();
@@ -61,18 +59,11 @@ class Supply {
     return new Supply(
       knownValueView(umMetadata, new Amount(splitLoHi(total))),
       Number(staked) / Number(total),
-      price,
-      market_cap,
     );
   }
 
   static fromJson(data: Jsonified<Supply>): Supply {
-    return new Supply(
-      ValueView.fromJson(data.total),
-      data.staked_percentage,
-      data.price,
-      data.market_cap,
-    );
+    return new Supply(ValueView.fromJson(data.total), data.staked_percentage);
   }
 }
 
@@ -253,16 +244,6 @@ const ShowSupply = ({ supply }: { supply: Supply }) => {
             <Table.Th>{"staked"}</Table.Th>
             <Table.Td>{(100 * supply.staked_percentage).toFixed(2)}%</Table.Td>
           </Table.Tr>
-          <Table.Tr>
-            <Table.Th>{"price"}</Table.Th>
-            <Table.Td>${supply.price.toLocaleString("en-us")}</Table.Td>
-          </Table.Tr>
-          <Table.Tr>
-            <Table.Th>{"market_cap"}</Table.Th>
-            <Table.Td>
-              ${(supply.market_cap / 1_000_000).toLocaleString("en-us")}
-            </Table.Td>
-          </Table.Tr>
         </Table.Tbody>
       </Table>
     </Card>
@@ -430,22 +411,6 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const raw = useLoaderData<Jsonified<Data>>();
   const data = Data.fromJson(raw);
-  console.log(
-    JSON.stringify(
-      data.shieldedPool
-        .filter(
-          (x) =>
-            x.now.current.valueView.case === "knownAssetId" &&
-            x.now.current.valueView.value.metadata!.symbol === "USDC",
-        )
-        .map((x) => [
-          x.now.current.valueView.value?.amount,
-          x.h24.current.valueView.value?.amount,
-          x.d7.current.valueView.value?.amount,
-          x.d30.current.valueView.value?.amount,
-        ]),
-    ),
-  );
   return (
     <PenumbraUIProvider>
       <Display>

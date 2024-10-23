@@ -24,10 +24,6 @@ export interface SupplyTable {
   total: bigint;
   /** Of this amount, how much is currently staked. */
   staked: bigint;
-  /** The current price of the native token, in dollars. */
-  price: number;
-  /** price * total. */
-  market_cap: number;
 }
 
 export interface BlockDetails {
