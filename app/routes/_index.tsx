@@ -28,7 +28,7 @@ import { Display } from "@penumbra-zone/ui/Display";
 import { TediousRequest } from "kysely";
 import { DropdownMenu } from "@penumbra-zone/ui/DropdownMenu";
 import { Button } from "@penumbra-zone/ui/Button";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 function knownValueView(metadata: Metadata, amount: Amount): ValueView {
   return new ValueView({
@@ -46,7 +46,7 @@ class Supply {
   constructor(
     public total: ValueView,
     public staked_percentage: number,
-  ) {}
+  ) { }
 
   static async fetch(db: Database, registry: Registry): Promise<Supply> {
     const { total, staked } = await db
@@ -76,7 +76,7 @@ class ShieldedPoolSnapshot {
     public current: ValueView,
     public priority: number,
     public unique_depositors: number,
-  ) {}
+  ) { }
 
   static async fetchKnownAssets(
     db: Database,
@@ -138,7 +138,7 @@ class ShieldedPoolTimedSnapshots {
     public h24: ShieldedPoolSnapshot,
     public d7: ShieldedPoolSnapshot,
     public d30: ShieldedPoolSnapshot,
-  ) {}
+  ) { }
 
   static async fetch(
     db: Database,
@@ -205,7 +205,7 @@ class Data {
   constructor(
     public supply: Supply,
     public shieldedPool: ShieldedPoolTimedSnapshots[],
-  ) {}
+  ) { }
 
   static async fetch(db: Database, registry: Registry): Promise<Data> {
     const [supply, shieldedPool] = await Promise.all([
@@ -230,25 +230,56 @@ export const loader = async (): Promise<Data> => {
 };
 
 const ShowSupply = ({ supply }: { supply: Supply }) => {
+  let staked = supply.total.clone();
+  staked.valueView.value!.amount = multiplyAmountByNumber(staked.valueView.value!.amount!, supply.staked_percentage);
   return (
     <Card title="Supply">
       <Table tableLayout="fixed">
         <Table.Tbody>
           <Table.Tr>
-            <Table.Th>{"total"}</Table.Th>
+            <Table.Th>{"Total"}</Table.Th>
             <Table.Td>
               <ValueViewComponent valueView={supply.total} />
             </Table.Td>
+            <Table.Td>
+              100%
+            </Table.Td>
           </Table.Tr>
           <Table.Tr>
-            <Table.Th>{"staked"}</Table.Th>
-            <Table.Td>{(100 * supply.staked_percentage).toFixed(2)}%</Table.Td>
+            <Table.Th>{"Staked"}</Table.Th>
+            <Table.Td>
+              <ValueViewComponent valueView={staked} />
+            </Table.Td>
+            <Table.Td> {(100 * supply.staked_percentage).toFixed(2)}%</Table.Td>
           </Table.Tr>
         </Table.Tbody>
       </Table>
     </Card>
   );
 };
+
+function formatCompactNumber(formattedStr: string, integral: boolean = false): string {
+  // Remove commas and convert to number
+  const num = parseFloat(formattedStr.replace(/,/g, ''));
+
+  if (Math.abs(num) < 0.01) {
+    return integral ? "0" : "0.00";
+  }
+
+  const suffixes = ['', 'K', 'M', 'B'];
+  const magnitude = Math.max(0, Math.min(3, Math.floor(Math.log10(Math.abs(num)) / 3)));
+  const scaledNum = num / Math.pow(1000, magnitude);
+
+  // For small numbers, optionally show as integers
+  if (magnitude === 0 && integral) {
+    return Math.round(num).toString();
+  }
+
+  // Always show exactly 3 significant digits
+  const formatted = scaledNum.toPrecision(3);
+
+  return `${formatted}${suffixes[magnitude]}`;
+}
 
 const ValueViewChange = ({
   then,
@@ -272,17 +303,21 @@ const ValueViewChange = ({
   const newValue = new ValueView({ valueView: now.valueView }).clone();
   newValue.valueView.value!.amount = changeAmount;
   const formatted = getFormattedAmtFromValueView(newValue, true);
+  const reformatted = formatCompactNumber(formatted);
   const sign = positive ? "+" : "-";
   return (
-    <span
-      className={
-        positive
-          ? change === 0n
-            ? "text-gray-400"
-            : "text-green-400"
-          : "text-red-400"
-      }
-    >{`${sign}${formatted}`}</span>
+    <span className={"text-xs"}>
+      <span
+        className={
+          positive
+            ? change === 0n
+              ? "text-gray-400"
+              : "text-green-400"
+            : "text-red-400"
+        }
+      >{`${sign}${reformatted}`}</span>
+      <span className={"text-gray-500"}> ({foo})</span>
+    </span>
   );
 };
 
@@ -323,83 +358,73 @@ const ShowShielded = ({
     if (changeWindow === "30d") {
       return x.d30;
     }
-    throw new Error(`impossible changeWindow: ${changeWindow}`);
+    throw new Error(`impossible changeWindow: ${changeWindow} `);
   };
 
   return (
     <Card title="Shielded Pool">
-      <Table>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>total / current </Table.Th>
-            <Table.Th>
-              <DropdownMenu>
-                <DropdownMenu.Trigger>
-                  <Button>Change {changeWindow}</Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content>
-                  <DropdownMenu.RadioGroup
-                    value={changeWindow}
-                    onChange={setChangeWindow}
-                  >
-                    {["24h", "7d", "30d"].map((x) => (
-                      <DropdownMenu.RadioItem value={x} key={x}>
-                        {x}
-                      </DropdownMenu.RadioItem>
-                    ))}
-                  </DropdownMenu.RadioGroup>
-                </DropdownMenu.Content>
-              </DropdownMenu>
-            </Table.Th>
-            <Table.Th>
-              <DropdownMenu>
-                <DropdownMenu.Trigger>
-                  <Button>Depositors {depositorsWindow}</Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content>
-                  <DropdownMenu.RadioGroup
-                    value={depositorsWindow}
-                    onChange={setDepositorsWindow}
-                  >
-                    {["∞", "24h", "7d", "30d"].map((x) => (
-                      <DropdownMenu.RadioItem value={x} key={x}>
-                        {x}
-                      </DropdownMenu.RadioItem>
-                    ))}
-                  </DropdownMenu.RadioGroup>
-                </DropdownMenu.Content>
-              </DropdownMenu>
-            </Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {sorted.map((x, i) => (
-            <Table.Tr key={i}>
-              <Table.Th>
-                <div className="flex flex-col gap-y-2">
-                  <ValueViewComponent valueView={x.now.total} />
-                  <ValueViewComponent valueView={x.now.current} />
-                </div>
-              </Table.Th>
-              <Table.Th>
-                <div className="flex flex-col gap-y-2">
-                  <ValueViewChange
-                    now={x.now.total}
-                    then={getChange(x).total}
-                    foo={changeWindow}
-                  />
-                  <ValueViewChange
-                    now={x.now.current}
-                    then={getChange(x).current}
-                    foo={changeWindow}
-                  />
-                </div>
-              </Table.Th>
-              <Table.Th>{getDepositors(x)}</Table.Th>
+      <div className="overflow-x-auto">
+        <Table>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Total Value Shielded</Table.Th>
+              <Table.Th>Current Value Shielded</Table.Th>
+              <Table.Th>Depositors</Table.Th>
             </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
+          </Table.Thead>
+          <Table.Tbody>
+            {sorted.map((x, i) => (
+              <Table.Tr key={i}>
+                <Table.Th>
+                  <div className="flex flex-col gap-y-2">
+                    <ValueViewComponent valueView={x.now.total} />
+                    <div className="space-x-2 min-w-[230px]">
+                      <ValueViewChange now={x.now.total} then={x.h24.total} foo="24h" />
+                      <ValueViewChange now={x.now.total} then={x.d7.total} foo="7d" />
+                      <ValueViewChange now={x.now.total} then={x.d30.total} foo="30d" />
+                    </div>
+                  </div>
+                </Table.Th>
+                <Table.Th>
+                  <div className="flex flex-col gap-y-2">
+                    <ValueViewComponent valueView={x.now.current} />
+                    <div className="space-x-2 min-w-[230px]">
+                      <ValueViewChange now={x.now.current} then={x.h24.current} foo="24h" />
+                      <ValueViewChange now={x.now.current} then={x.d7.current} foo="7d" />
+                      <ValueViewChange now={x.now.current} then={x.d30.current} foo="30d" />
+                    </div>
+                  </div>
+                </Table.Th>
+                <Table.Th>
+                  <div className="flex flex-col gap-y-2">
+                    {formatCompactNumber(x.now.unique_depositors.toString(), true)}
+                    <div className="space-x-4 text-xs min-w-[220px]">
+                      <span>
+                        <span className="text-gray-400">
+                          {formatCompactNumber((x.now.unique_depositors - x.h24.unique_depositors).toString(), true)}
+                        </span>
+                        <span className="text-gray-500"> (24h)</span>
+                      </span>
+                      <span>
+                        <span className="text-gray-400">
+                          {formatCompactNumber((x.now.unique_depositors - x.d7.unique_depositors).toString(), true)}
+                        </span>
+                        <span className="text-gray-500"> (7d)</span>
+                      </span>
+                      <span>
+                        <span className="text-gray-400">
+                          {formatCompactNumber((x.now.unique_depositors - x.d30.unique_depositors).toString(), true)}
+                        </span>
+                        <span className="text-gray-500"> (30d)</span>
+                      </span>
+                    </div>
+                  </div>
+                </Table.Th>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      </div>
     </Card>
   );
 };
@@ -416,10 +441,10 @@ export default function Index() {
       <Display>
         <Density compact>
           <Grid container as="main">
-            <Grid lg={6}>
+            <Grid lg={8}>
               <ShowSupply supply={data.supply} />
             </Grid>
-            <Grid lg={6}>
+            <Grid lg={8}>
               <ShowShielded shielded={data.shieldedPool} />
             </Grid>
           </Grid>
