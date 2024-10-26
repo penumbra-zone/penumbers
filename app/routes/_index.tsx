@@ -368,7 +368,7 @@ const ShowShielded = ({
   };
 
   return (
-    <Card title="Shielded Pool">
+    <Card title="Interchain Shielded Pool">
       <div className="overflow-x-auto">
         <Table>
           <Table.Thead>
@@ -384,7 +384,7 @@ const ShowShielded = ({
                 <Table.Th>
                   <div className="flex flex-col gap-y-2">
                     <ValueViewComponent valueView={x.now.total} />
-                    <div className="space-x-2 min-w-[230px]">
+                    <div className="space-x-2 min-w-[240px]">
                       <ValueViewChange now={x.now.total} then={x.h24.total} foo="24h" />
                       <ValueViewChange now={x.now.total} then={x.d7.total} foo="7d" />
                       <ValueViewChange now={x.now.total} then={x.d30.total} foo="30d" />
@@ -394,7 +394,7 @@ const ShowShielded = ({
                 <Table.Th>
                   <div className="flex flex-col gap-y-2">
                     <ValueViewComponent valueView={x.now.current} />
-                    <div className="space-x-2 min-w-[230px]">
+                    <div className="space-x-2 min-w-[240px]">
                       <ValueViewChange now={x.now.current} then={x.h24.current} foo="24h" />
                       <ValueViewChange now={x.now.current} then={x.d7.current} foo="7d" />
                       <ValueViewChange now={x.now.current} then={x.d30.current} foo="30d" />
