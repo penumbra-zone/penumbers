@@ -326,11 +326,17 @@ const ShowShielded = ({
 }: {
   shielded: ShieldedPoolTimedSnapshots[];
 }) => {
+  /*
   const sorted = [...shielded].sort((a, b) =>
     a.now.priority === b.now.priority
       ? b.now.unique_depositors - a.now.unique_depositors
       : b.now.priority - a.now.priority,
   );
+  */
+  const sorted = [...shielded].sort((a, b) =>
+    b.now.unique_depositors - a.now.unique_depositors
+  );
+
 
   const [changeWindow, setChangeWindow] = useState("24h");
   const [depositorsWindow, setDepositorsWindow] = useState("∞");
