@@ -1,15 +1,18 @@
 ---
 name: Create and publish container image
 on:
-  # Build on merge to main, or any tag push.
-  push:
-    branches:
-      - main
-    tags:
-      - '**[0-9]+.[0-9]+.[0-9]+*'
-  # Also support ad-hoc calls for workflow.
+  # Don't build on merge into main:
+  # instead, we'll trigger the container build via the "deploy" workflow,
+  # which runs on merge to main.
+  # push:
+  #   branches:
+  #     - main
+  #     tags:
+  #     - '**[0-9]+.[0-9]+.[0-9]+*'
+  # Also support ad-hoc and per-repo calls to trigger builds.
   workflow_call:
   workflow_dispatch:
+  repository_dispatch:
 jobs:
   penumbers:
     runs-on: buildjet-16vcpu-ubuntu-2204
