@@ -19,6 +19,10 @@
             # pnpm
             nodejs_20
             postgresql
+
+            # for deployment/ci
+            doctl
+            kubectl
           ];
         };
       });
