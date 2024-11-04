@@ -1,8 +1,8 @@
+import { useState } from "react";
 import { Table } from "@penumbra-zone/ui/Table";
 import type { MetaFunction } from "@remix-run/node";
-import { Database, db, Schema } from "backend/database";
-import { QueryCreator } from "kysely";
-import { joinLoHi, splitLoHi } from "@penumbra-zone/types/lo-hi";
+import { Database, db } from "backend/database";
+import { splitLoHi } from "@penumbra-zone/types/lo-hi";
 import {
   AssetId,
   Metadata,
@@ -16,19 +16,13 @@ import { ChainRegistryClient, Registry } from "@penumbra-labs/registry";
 import {
   joinLoHiAmount,
   multiplyAmountByNumber,
-  subtractAmounts,
 } from "@penumbra-zone/types/amount";
-import { PenumbraUIProvider } from "@penumbra-zone/ui/PenumbraUIProvider";
-import { ValueViewComponent } from "@penumbra-zone/ui/ValueViewComponent";
+import { ValueViewComponent } from "@penumbra-zone/ui/ValueView";
 import { Grid } from "@penumbra-zone/ui/Grid";
 import { Card } from "@penumbra-zone/ui/Card";
 import { Density } from "@penumbra-zone/ui/Density";
 import { getFormattedAmtFromValueView } from "@penumbra-zone/types/value-view";
 import { Display } from "@penumbra-zone/ui/Display";
-import { TediousRequest } from "kysely";
-import { DropdownMenu } from "@penumbra-zone/ui/DropdownMenu";
-import { Button } from "@penumbra-zone/ui/Button";
-import { Fragment, useState } from "react";
 
 function knownValueView(metadata: Metadata, amount: Amount): ValueView {
   return new ValueView({
@@ -443,19 +437,17 @@ export default function Index() {
   const raw = useLoaderData<Jsonified<Data>>();
   const data = Data.fromJson(raw);
   return (
-    <PenumbraUIProvider>
-      <Display>
-        <Density compact>
-          <Grid container as="main">
-            <Grid lg={8}>
-              <ShowSupply supply={data.supply} />
-            </Grid>
-            <Grid lg={8}>
-              <ShowShielded shielded={data.shieldedPool} />
-            </Grid>
+    <Display>
+      <Density compact>
+        <Grid container as="main">
+          <Grid lg={8}>
+            <ShowSupply supply={data.supply} />
           </Grid>
-        </Density>
-      </Display>
-    </PenumbraUIProvider>
+          <Grid lg={8}>
+            <ShowShielded shielded={data.shieldedPool} />
+          </Grid>
+        </Grid>
+      </Density>
+    </Display>
   );
 }
