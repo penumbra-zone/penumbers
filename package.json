@@ -14,7 +14,7 @@
     "@penumbra-labs/registry": "^12.0.0",
     "@penumbra-zone/protobuf": "^6.3.0",
     "@penumbra-zone/types": "^26.1.0",
-    "@penumbra-zone/ui": "^12.2.1",
+    "@penumbra-zone/ui": "file:./penumbra-zone-ui-tailwind-0.1.0.tgz",
     "@remix-run/node": "^2.12.1",
     "@remix-run/react": "^2.12.1",
     "@remix-run/serve": "^2.12.1",
@@ -22,10 +22,9 @@
     "kysely": "^0.27.4",
     "lucide-react": "^0.453.0",
     "pg": "^8.13.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "remix-typedjson": "^0.4.1",
-    "styled-components": "^6.1.13"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remix-typedjson": "^0.4.1"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.12.1",
@@ -49,5 +48,6 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "packageManager": "pnpm@9.7.0+sha512.dc09430156b427f5ecfc79888899e1c39d2d690f004be70e05230b72cb173d96839587545d09429b55ac3c429c801b4dc3c0e002f653830a420fa2dd4e3cf9cf"
 }
