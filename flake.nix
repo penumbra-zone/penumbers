@@ -16,8 +16,8 @@
             file
             jq
             just
-            # pnpm
-            nodejs_20
+            pnpm
+            # nodejs_20
             postgresql
 
             # for deployment/ci
