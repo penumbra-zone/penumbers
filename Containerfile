@@ -9,11 +9,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies
-COPY package.json package-lock.json ./
-# Right now the repo prefers `npm` rather than `pnpm`
-# COPY package.json pnpm-lock.yaml* ./
-# RUN corepack enable pnpm && pnpm install --frozen-lockfile
-RUN npm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable pnpm && pnpm install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -22,8 +19,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build the website as standalone output.
-RUN npm --version && node --version
-RUN npm run build
+RUN pnpm --version && node --version
+RUN pnpm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -42,4 +39,4 @@ USER nodejs
 EXPOSE 3000
 ENV PORT 3000
 
-CMD HOSTNAME="0.0.0.0" npm start
+CMD HOSTNAME="0.0.0.0" pnpm start
