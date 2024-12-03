@@ -23,6 +23,7 @@ import { Card } from "@penumbra-zone/ui/Card";
 import { Density } from "@penumbra-zone/ui/Density";
 import { getFormattedAmtFromValueView } from "@penumbra-zone/types/value-view";
 import { Display } from "@penumbra-zone/ui/Display";
+import { Tooltip, TooltipProvider } from "@penumbra-zone/ui/Tooltip";
 
 function knownValueView(metadata: Metadata, amount: Amount): ValueView {
   return new ValueView({
@@ -72,7 +73,21 @@ const ShowChainInfo = ({ chainInfo }: { chainInfo: ChainInfo }) => {
           </Table.Tr>
           <Table.Tr>
             <Table.Th>{"Time"}</Table.Th>
-            <Table.Td>{chainInfo.time.toISOString()}</Table.Td>
+            <Table.Td>
+              <TooltipProvider>
+                <Tooltip message={chainInfo.time.toISOString()}>
+                  {new Intl.DateTimeFormat(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    timeZoneName: "short",
+                  }).format(chainInfo.time)}
+                </Tooltip>
+              </TooltipProvider>
+            </Table.Td>
           </Table.Tr>
         </Table.Tbody>
       </Table>
