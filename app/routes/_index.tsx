@@ -23,6 +23,7 @@ import { Card } from "@penumbra-zone/ui/Card";
 import { Density } from "@penumbra-zone/ui/Density";
 import { getFormattedAmtFromValueView } from "@penumbra-zone/types/value-view";
 import { Display } from "@penumbra-zone/ui/Display";
+import { Tooltip, TooltipProvider } from "@penumbra-zone/ui/Tooltip";
 
 function knownValueView(metadata: Metadata, amount: Amount): ValueView {
   return new ValueView({
@@ -34,13 +35,74 @@ function knownValueView(metadata: Metadata, amount: Amount): ValueView {
 }
 
 /**
+ * General information about the current state of the chain.
+ */
+class ChainInfo {
+  constructor(
+    public height: number,
+    public time: Date,
+  ) {}
+
+  static async fetch(db: Database): Promise<ChainInfo> {
+    const { height, timestamp } = await db
+      .selectFrom("block_details")
+      .select(["height", "timestamp"])
+      .orderBy("height desc")
+      .limit(1)
+      .executeTakeFirstOrThrow();
+    return new ChainInfo(Number(height), timestamp);
+  }
+
+  static fromJson(data: Jsonified<ChainInfo>): ChainInfo {
+    return new ChainInfo(data.height, new Date(data.time));
+  }
+
+  toJSON(): Jsonified<ChainInfo> {
+    return { height: this.height, time: this.time.toISOString() };
+  }
+}
+
+const ShowChainInfo = ({ chainInfo }: { chainInfo: ChainInfo }) => {
+  return (
+    <Card title="Chain">
+      <Table tableLayout="fixed">
+        <Table.Tbody>
+          <Table.Tr>
+            <Table.Th>{"Height"}</Table.Th>
+            <Table.Td>{chainInfo.height}</Table.Td>
+          </Table.Tr>
+          <Table.Tr>
+            <Table.Th>{"Time"}</Table.Th>
+            <Table.Td>
+              <TooltipProvider>
+                <Tooltip message={chainInfo.time.toISOString()}>
+                  {new Intl.DateTimeFormat(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    timeZoneName: "short",
+                  }).format(chainInfo.time)}
+                </Tooltip>
+              </TooltipProvider>
+            </Table.Td>
+          </Table.Tr>
+        </Table.Tbody>
+      </Table>
+    </Card>
+  );
+};
+
+/**
  * Information about the total supply of the native token.
  */
 class Supply {
   constructor(
     public total: ValueView,
     public staked_percentage: number,
-  ) { }
+  ) {}
 
   static async fetch(db: Database, registry: Registry): Promise<Supply> {
     const { total, staked } = await db
@@ -70,7 +132,7 @@ class ShieldedPoolSnapshot {
     public current: ValueView,
     public priority: number,
     public unique_depositors: number,
-  ) { }
+  ) {}
 
   static async fetchKnownAssets(
     db: Database,
@@ -132,7 +194,7 @@ class ShieldedPoolTimedSnapshots {
     public h24: ShieldedPoolSnapshot,
     public d7: ShieldedPoolSnapshot,
     public d30: ShieldedPoolSnapshot,
-  ) { }
+  ) {}
 
   static async fetch(
     db: Database,
@@ -197,20 +259,23 @@ class ShieldedPoolTimedSnapshots {
 
 class Data {
   constructor(
+    public chainInfo: ChainInfo,
     public supply: Supply,
     public shieldedPool: ShieldedPoolTimedSnapshots[],
-  ) { }
+  ) {}
 
   static async fetch(db: Database, registry: Registry): Promise<Data> {
-    const [supply, shieldedPool] = await Promise.all([
+    const [chainInfo, supply, shieldedPool] = await Promise.all([
+      ChainInfo.fetch(db),
       Supply.fetch(db, registry),
       ShieldedPoolTimedSnapshots.fetch(db, registry),
     ]);
-    return new Data(supply, shieldedPool);
+    return new Data(chainInfo, supply, shieldedPool);
   }
 
   static fromJson(data: Jsonified<Data>): Data {
     return new Data(
+      ChainInfo.fromJson(data.chainInfo),
       Supply.fromJson(data.supply),
       data.shieldedPool.map(ShieldedPoolTimedSnapshots.fromJson),
     );
@@ -225,7 +290,10 @@ export const loader = async (): Promise<Data> => {
 
 const ShowSupply = ({ supply }: { supply: Supply }) => {
   let staked = supply.total.clone();
-  staked.valueView.value!.amount = multiplyAmountByNumber(staked.valueView.value!.amount!, supply.staked_percentage);
+  staked.valueView.value!.amount = multiplyAmountByNumber(
+    staked.valueView.value!.amount!,
+    supply.staked_percentage,
+  );
   return (
     <Card title="Supply">
       <Table tableLayout="fixed">
@@ -235,9 +303,7 @@ const ShowSupply = ({ supply }: { supply: Supply }) => {
             <Table.Td>
               <ValueViewComponent valueView={supply.total} />
             </Table.Td>
-            <Table.Td>
-              100%
-            </Table.Td>
+            <Table.Td>100%</Table.Td>
           </Table.Tr>
           <Table.Tr>
             <Table.Th>{"Staked"}</Table.Th>
@@ -252,16 +318,22 @@ const ShowSupply = ({ supply }: { supply: Supply }) => {
   );
 };
 
-function formatCompactNumber(formattedStr: string, integral: boolean = false): string {
+function formatCompactNumber(
+  formattedStr: string,
+  integral: boolean = false,
+): string {
   // Remove commas and convert to number
-  const num = parseFloat(formattedStr.replace(/,/g, ''));
+  const num = parseFloat(formattedStr.replace(/,/g, ""));
 
   if (Math.abs(num) < 0.01) {
     return integral ? "0" : "0.00";
   }
 
-  const suffixes = ['', 'K', 'M', 'B'];
-  const magnitude = Math.max(0, Math.min(3, Math.floor(Math.log10(Math.abs(num)) / 3)));
+  const suffixes = ["", "K", "M", "B"];
+  const magnitude = Math.max(
+    0,
+    Math.min(3, Math.floor(Math.log10(Math.abs(num)) / 3)),
+  );
   const scaledNum = num / Math.pow(1000, magnitude);
 
   // For small numbers, optionally show as integers
@@ -320,17 +392,9 @@ const ShowShielded = ({
 }: {
   shielded: ShieldedPoolTimedSnapshots[];
 }) => {
-  /*
-  const sorted = [...shielded].sort((a, b) =>
-    a.now.priority === b.now.priority
-      ? b.now.unique_depositors - a.now.unique_depositors
-      : b.now.priority - a.now.priority,
+  const sorted = [...shielded].sort(
+    (a, b) => b.now.unique_depositors - a.now.unique_depositors,
   );
-  */
-  const sorted = [...shielded].sort((a, b) =>
-    b.now.unique_depositors - a.now.unique_depositors
-  );
-
 
   const [changeWindow, setChangeWindow] = useState("24h");
   const [depositorsWindow, setDepositorsWindow] = useState("∞");
@@ -379,9 +443,21 @@ const ShowShielded = ({
                   <div className="flex flex-col gap-y-2">
                     <ValueViewComponent valueView={x.now.total} />
                     <div className="space-x-2 min-w-[240px]">
-                      <ValueViewChange now={x.now.total} then={x.h24.total} foo="24h" />
-                      <ValueViewChange now={x.now.total} then={x.d7.total} foo="7d" />
-                      <ValueViewChange now={x.now.total} then={x.d30.total} foo="30d" />
+                      <ValueViewChange
+                        now={x.now.total}
+                        then={x.h24.total}
+                        foo="24h"
+                      />
+                      <ValueViewChange
+                        now={x.now.total}
+                        then={x.d7.total}
+                        foo="7d"
+                      />
+                      <ValueViewChange
+                        now={x.now.total}
+                        then={x.d30.total}
+                        foo="30d"
+                      />
                     </div>
                   </div>
                 </Table.Th>
@@ -389,31 +465,61 @@ const ShowShielded = ({
                   <div className="flex flex-col gap-y-2">
                     <ValueViewComponent valueView={x.now.current} />
                     <div className="space-x-2 min-w-[240px]">
-                      <ValueViewChange now={x.now.current} then={x.h24.current} foo="24h" />
-                      <ValueViewChange now={x.now.current} then={x.d7.current} foo="7d" />
-                      <ValueViewChange now={x.now.current} then={x.d30.current} foo="30d" />
+                      <ValueViewChange
+                        now={x.now.current}
+                        then={x.h24.current}
+                        foo="24h"
+                      />
+                      <ValueViewChange
+                        now={x.now.current}
+                        then={x.d7.current}
+                        foo="7d"
+                      />
+                      <ValueViewChange
+                        now={x.now.current}
+                        then={x.d30.current}
+                        foo="30d"
+                      />
                     </div>
                   </div>
                 </Table.Th>
                 <Table.Th>
                   <div className="flex flex-col gap-y-2">
-                    {formatCompactNumber(x.now.unique_depositors.toString(), true)}
+                    {formatCompactNumber(
+                      x.now.unique_depositors.toString(),
+                      true,
+                    )}
                     <div className="space-x-4 text-xs min-w-[220px]">
                       <span>
                         <span className="text-gray-400">
-                          {formatCompactNumber((x.now.unique_depositors - x.h24.unique_depositors).toString(), true)}
+                          {formatCompactNumber(
+                            (
+                              x.now.unique_depositors - x.h24.unique_depositors
+                            ).toString(),
+                            true,
+                          )}
                         </span>
                         <span className="text-gray-500"> (24h)</span>
                       </span>
                       <span>
                         <span className="text-gray-400">
-                          {formatCompactNumber((x.now.unique_depositors - x.d7.unique_depositors).toString(), true)}
+                          {formatCompactNumber(
+                            (
+                              x.now.unique_depositors - x.d7.unique_depositors
+                            ).toString(),
+                            true,
+                          )}
                         </span>
                         <span className="text-gray-500"> (7d)</span>
                       </span>
                       <span>
                         <span className="text-gray-400">
-                          {formatCompactNumber((x.now.unique_depositors - x.d30.unique_depositors).toString(), true)}
+                          {formatCompactNumber(
+                            (
+                              x.now.unique_depositors - x.d30.unique_depositors
+                            ).toString(),
+                            true,
+                          )}
                         </span>
                         <span className="text-gray-500"> (30d)</span>
                       </span>
@@ -440,6 +546,9 @@ export default function Index() {
     <Display>
       <Density compact>
         <Grid container as="main">
+          <Grid lg={8}>
+            <ShowChainInfo chainInfo={data.chainInfo} />
+          </Grid>
           <Grid lg={8}>
             <ShowSupply supply={data.supply} />
           </Grid>
