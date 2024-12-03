@@ -11,6 +11,3 @@
 !backend/
 !app/
 !public/
-
-# allow a specific source tarball, introduced in GH#13.
-!penumbra-zone-ui-tailwind-0.1.0.tgz
