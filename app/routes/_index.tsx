@@ -24,6 +24,8 @@ import { Density } from "@penumbra-zone/ui/Density";
 import { getFormattedAmtFromValueView } from "@penumbra-zone/types/value-view";
 import { Display } from "@penumbra-zone/ui/Display";
 import { Tooltip, TooltipProvider } from "@penumbra-zone/ui/Tooltip";
+import { penumbraToCoinGeckoMap } from "../data/coingecko";
+import { Cone } from "lucide-react";
 
 function knownValueView(metadata: Metadata, amount: Amount): ValueView {
   return new ValueView({
@@ -34,14 +36,21 @@ function knownValueView(metadata: Metadata, amount: Amount): ValueView {
   });
 }
 
+const formatUSD = (amount: number): string => {
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return formatter.format(amount);
+};
+
 /**
  * General information about the current state of the chain.
  */
 class ChainInfo {
-  constructor(
-    public height: number,
-    public time: Date,
-  ) {}
+  constructor(public height: number, public time: Date) {}
 
   static async fetch(db: Database): Promise<ChainInfo> {
     const { height, timestamp } = await db
@@ -99,10 +108,7 @@ const ShowChainInfo = ({ chainInfo }: { chainInfo: ChainInfo }) => {
  * Information about the total supply of the native token.
  */
 class Supply {
-  constructor(
-    public total: ValueView,
-    public staked_percentage: number,
-  ) {}
+  constructor(public total: ValueView, public staked_percentage: number) {}
 
   static async fetch(db: Database, registry: Registry): Promise<Supply> {
     const { total, staked } = await db
@@ -114,12 +120,38 @@ class Supply {
     const umMetadata = registry.getAllAssets().find((x) => x.symbol === "UM")!;
     return new Supply(
       knownValueView(umMetadata, new Amount(splitLoHi(total))),
-      Number(staked) / Number(total),
+      Number(staked) / Number(total)
     );
   }
 
   static fromJson(data: Jsonified<Supply>): Supply {
     return new Supply(ValueView.fromJson(data.total), data.staked_percentage);
+  }
+}
+
+async function fetchCoinGeckoPrice(
+  metadata: Metadata
+): Promise<number | undefined> {
+  let coinGeckoId = penumbraToCoinGeckoMap[metadata.symbol];
+  if (!coinGeckoId) {
+    coinGeckoId = metadata.symbol;
+  }
+
+  try {
+    const response = await fetch(
+      `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coinGeckoId}&vs_currencies=usd&x_cg_pro_api_key=${process.env.COINGECKO_API_KEY}`
+    );
+    if (!response.ok) {
+      console.error(
+        `Failed to fetch CoinGecko price for ${coinGeckoId}, status: ${response.status}`
+      );
+      return undefined;
+    }
+    const data = await response.json();
+    return data[coinGeckoId]?.usd;
+  } catch (error) {
+    console.error(`Error fetching CoinGecko price for ${coinGeckoId}:`, error);
+    return undefined;
   }
 }
 
@@ -129,15 +161,17 @@ class Supply {
 class ShieldedPoolSnapshot {
   constructor(
     public total: ValueView,
+    public total_usd: number,
     public current: ValueView,
+    public current_usd: number,
     public priority: number,
-    public unique_depositors: number,
+    public unique_depositors: number
   ) {}
 
   static async fetchKnownAssets(
     db: Database,
     registry: Registry,
-    time: Date,
+    time: Date
   ): Promise<ShieldedPoolSnapshot[]> {
     const rows = await db
       .selectFrom("insights_shielded_pool")
@@ -146,7 +180,7 @@ class ShieldedPoolSnapshot {
       .innerJoin(
         "block_details",
         "insights_shielded_pool.height",
-        "block_details.height",
+        "block_details.height"
       )
       .orderBy(["asset_id", "block_details.height desc"])
       .where("timestamp", "<=", time)
@@ -160,19 +194,37 @@ class ShieldedPoolSnapshot {
       } catch (e) {
         continue;
       }
+
+      const totalValue = new Amount(splitLoHi(BigInt(row.total_value)));
+      const currentValue = new Amount(splitLoHi(BigInt(row.current_value)));
+
+      const totalValueView = knownValueView(metadata, totalValue);
+      const currentValueView = knownValueView(metadata, currentValue);
+
+      // Fetch USD price from CoinGecko
+      const usdPrice = await fetchCoinGeckoPrice(metadata);
+      const total_usd = usdPrice
+        ? Number(getFormattedAmtFromValueView(totalValueView)) * usdPrice
+        : 0;
+      const current_usd = usdPrice
+        ? Number(getFormattedAmtFromValueView(currentValueView)) * usdPrice
+        : 0;
+
       out.push(
         new ShieldedPoolSnapshot(
           knownValueView(
             metadata,
-            new Amount(splitLoHi(BigInt(row.total_value))),
+            new Amount(splitLoHi(BigInt(row.total_value)))
           ),
+          total_usd,
           knownValueView(
             metadata,
-            new Amount(splitLoHi(BigInt(row.current_value))),
+            new Amount(splitLoHi(BigInt(row.current_value)))
           ),
+          current_usd,
           Number(metadata.priorityScore),
-          row.unique_depositors,
-        ),
+          row.unique_depositors
+        )
       );
     }
     return out;
@@ -181,9 +233,11 @@ class ShieldedPoolSnapshot {
   static fromJson(data: Jsonified<ShieldedPoolSnapshot>): ShieldedPoolSnapshot {
     return new ShieldedPoolSnapshot(
       ValueView.fromJson(data.total),
+      data.total_usd,
       ValueView.fromJson(data.current),
+      data.current_usd,
       data.priority,
-      data.unique_depositors,
+      data.unique_depositors
     );
   }
 }
@@ -193,12 +247,12 @@ class ShieldedPoolTimedSnapshots {
     public now: ShieldedPoolSnapshot,
     public h24: ShieldedPoolSnapshot,
     public d7: ShieldedPoolSnapshot,
-    public d30: ShieldedPoolSnapshot,
+    public d30: ShieldedPoolSnapshot
   ) {}
 
   static async fetch(
     db: Database,
-    registry: Registry,
+    registry: Registry
   ): Promise<ShieldedPoolTimedSnapshots[]> {
     const now = new Date();
     const ago24h = new Date(now.getTime());
@@ -210,8 +264,8 @@ class ShieldedPoolTimedSnapshots {
 
     const [arr, arr24h, arr7d, arr30d] = await Promise.all(
       [now, ago24h, ago7d, ago30d].map((x) =>
-        ShieldedPoolSnapshot.fetchKnownAssets(db, registry, x),
-      ),
+        ShieldedPoolSnapshot.fetchKnownAssets(db, registry, x)
+      )
     );
     // Convert a list for each time into a list containing a value for each time, per asset.
     const partialSnapshots: Map<
@@ -246,13 +300,13 @@ class ShieldedPoolTimedSnapshots {
   }
 
   static fromJson(
-    data: Jsonified<ShieldedPoolTimedSnapshots>,
+    data: Jsonified<ShieldedPoolTimedSnapshots>
   ): ShieldedPoolTimedSnapshots {
     return new ShieldedPoolTimedSnapshots(
       ShieldedPoolSnapshot.fromJson(data.now),
       ShieldedPoolSnapshot.fromJson(data.h24),
       ShieldedPoolSnapshot.fromJson(data.d7),
-      ShieldedPoolSnapshot.fromJson(data.d30),
+      ShieldedPoolSnapshot.fromJson(data.d30)
     );
   }
 }
@@ -261,7 +315,7 @@ class Data {
   constructor(
     public chainInfo: ChainInfo,
     public supply: Supply,
-    public shieldedPool: ShieldedPoolTimedSnapshots[],
+    public shieldedPool: ShieldedPoolTimedSnapshots[]
   ) {}
 
   static async fetch(db: Database, registry: Registry): Promise<Data> {
@@ -277,7 +331,7 @@ class Data {
     return new Data(
       ChainInfo.fromJson(data.chainInfo),
       Supply.fromJson(data.supply),
-      data.shieldedPool.map(ShieldedPoolTimedSnapshots.fromJson),
+      data.shieldedPool.map(ShieldedPoolTimedSnapshots.fromJson)
     );
   }
 }
@@ -289,10 +343,10 @@ export const loader = async (): Promise<Data> => {
 };
 
 const ShowSupply = ({ supply }: { supply: Supply }) => {
-  let staked = supply.total.clone();
+  const staked = supply.total.clone();
   staked.valueView.value!.amount = multiplyAmountByNumber(
     staked.valueView.value!.amount!,
-    supply.staked_percentage,
+    supply.staked_percentage
   );
   return (
     <Card title="Supply">
@@ -320,7 +374,7 @@ const ShowSupply = ({ supply }: { supply: Supply }) => {
 
 function formatCompactNumber(
   formattedStr: string,
-  integral: boolean = false,
+  integral: boolean = false
 ): string {
   // Remove commas and convert to number
   const num = parseFloat(formattedStr.replace(/,/g, ""));
@@ -332,7 +386,7 @@ function formatCompactNumber(
   const suffixes = ["", "K", "M", "B"];
   const magnitude = Math.max(
     0,
-    Math.min(3, Math.floor(Math.log10(Math.abs(num)) / 3)),
+    Math.min(3, Math.floor(Math.log10(Math.abs(num)) / 3))
   );
   const scaledNum = num / Math.pow(1000, magnitude);
 
@@ -393,7 +447,7 @@ const ShowShielded = ({
   shielded: ShieldedPoolTimedSnapshots[];
 }) => {
   const sorted = [...shielded].sort(
-    (a, b) => b.now.unique_depositors - a.now.unique_depositors,
+    (a, b) => b.now.unique_depositors - a.now.unique_depositors
   );
 
   const [changeWindow, setChangeWindow] = useState("24h");
@@ -442,6 +496,7 @@ const ShowShielded = ({
                 <Table.Th>
                   <div className="flex flex-col gap-y-2">
                     <ValueViewComponent valueView={x.now.total} />
+                    {formatUSD(x.now.total_usd)}
                     <div className="space-x-2 min-w-[240px]">
                       <ValueViewChange
                         now={x.now.total}
@@ -464,6 +519,7 @@ const ShowShielded = ({
                 <Table.Th>
                   <div className="flex flex-col gap-y-2">
                     <ValueViewComponent valueView={x.now.current} />
+                    {formatUSD(x.now.current_usd)}
                     <div className="space-x-2 min-w-[240px]">
                       <ValueViewChange
                         now={x.now.current}
@@ -487,7 +543,7 @@ const ShowShielded = ({
                   <div className="flex flex-col gap-y-2">
                     {formatCompactNumber(
                       x.now.unique_depositors.toString(),
-                      true,
+                      true
                     )}
                     <div className="space-x-4 text-xs min-w-[220px]">
                       <span>
@@ -496,7 +552,7 @@ const ShowShielded = ({
                             (
                               x.now.unique_depositors - x.h24.unique_depositors
                             ).toString(),
-                            true,
+                            true
                           )}
                         </span>
                         <span className="text-gray-500"> (24h)</span>
@@ -507,7 +563,7 @@ const ShowShielded = ({
                             (
                               x.now.unique_depositors - x.d7.unique_depositors
                             ).toString(),
-                            true,
+                            true
                           )}
                         </span>
                         <span className="text-gray-500"> (7d)</span>
@@ -518,7 +574,7 @@ const ShowShielded = ({
                             (
                               x.now.unique_depositors - x.d30.unique_depositors
                             ).toString(),
-                            true,
+                            true
                           )}
                         </span>
                         <span className="text-gray-500"> (30d)</span>
