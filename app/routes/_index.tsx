@@ -132,7 +132,7 @@ class Supply {
 async function fetchCoinGeckoPrice(
   metadata: Metadata
 ): Promise<number | undefined> {
-  let coinGeckoId = penumbraToCoinGeckoMap[metadata.symbol];
+  let coinGeckoId = metadata.coingeckoId;
   if (!coinGeckoId) {
     coinGeckoId = metadata.symbol;
   }
