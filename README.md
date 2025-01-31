@@ -38,6 +38,11 @@ If you see an error `self-signed certificate in certificate chain`, then you'll 
 
 See context in https://github.com/penumbra-zone/dex-explorer/issues/55. After configuring that information, run `just dev` again in the nix shell, and you should have events visible.
 
+## Coingecko API
+
+The application uses the Coingecko API to fetch the current price of the shielded tokens.
+You can set the API key by setting the environment variable `COINGECKO_API_KEY`.
+`export COINGECKO_API_KEY=CG-xxxxx`
 
 ## Deployment
 
