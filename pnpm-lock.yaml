@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@penumbra-labs/registry':
-        specifier: ^12.1.1
-        version: 12.1.1
+        specifier: ^12.1.2
+        version: 12.1.2
       '@penumbra-zone/protobuf':
         specifier: ^7.1.0
         version: 7.1.0(@bufbuild/protobuf@1.10.0)
@@ -637,8 +637,8 @@ packages:
     resolution: {integrity: sha512-gGq0NJkIGSwdbUt4yhdF8ZrmkGKVz9vAdVzpOfnom+V8PLSmSOVhZwbNvZZS1EYcJN5hzzKBxmmVVAInM6HQLg==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
 
-  '@penumbra-labs/registry@12.1.1':
-    resolution: {integrity: sha512-8Ei802G1UtJZlSzv0NOYUU26HpDbbGpb5+tlc9F0FQ1OR6O/UqnVxoYDgkN6p9aPD5ea/8I85Atc3Y91Qy329w==}
+  '@penumbra-labs/registry@12.1.2':
+    resolution: {integrity: sha512-liEHPJJYaAXxFQ8AszoemYfId8w5OliOT5X8X1OQAoaF3WCWaVMmUpa7TAkF+dZu2Nkir0wy14fBq/5jc/WiiA==}
 
   '@penumbra-zone/bech32m@10.0.0':
     resolution: {integrity: sha512-VPsT7QePXBIgYUJq0ljRCdUivmYgF3oAuaQntJLGw/mXkFwB9Ly6tYr+2ZysQv4LQjujWutIiuvKITOKPtN5cA==}
@@ -4763,7 +4763,7 @@ snapshots:
     dependencies:
       which: 3.0.1
 
-  '@penumbra-labs/registry@12.1.1': {}
+  '@penumbra-labs/registry@12.1.2': {}
 
   '@penumbra-zone/bech32m@10.0.0(@penumbra-zone/protobuf@7.1.0(@bufbuild/protobuf@1.10.0))':
     dependencies:

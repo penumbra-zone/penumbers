@@ -11,7 +11,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@penumbra-labs/registry": "^12.1.1",
+    "@penumbra-labs/registry": "^12.1.2",
     "@penumbra-zone/protobuf": "^7.1.0",
     "@penumbra-zone/types": "^26.2.1",
     "@penumbra-zone/ui": "^13.4.1",
