@@ -21,6 +21,7 @@ jobs:
     name: deploy insights
     env:
       DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      COINGECKO_API_KEY: ${{ secrets.ERWAN_COINGECKO_TOKEN_TMP }}
     needs:
       - build-container
     runs-on: buildjet-8vcpu-ubuntu-2204
