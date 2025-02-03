@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Table } from "@penumbra-zone/ui/Table";
 import type { MetaFunction } from "@remix-run/node";
 import { Database, db } from "backend/database";
+import { fetchCoinGeckoPrice } from "backend/cache/coinGeckoCache";
 import { splitLoHi } from "@penumbra-zone/types/lo-hi";
 import {
   AssetId,
@@ -24,7 +25,7 @@ import { Density } from "@penumbra-zone/ui/Density";
 import { getFormattedAmtFromValueView } from "@penumbra-zone/types/value-view";
 import { Display } from "@penumbra-zone/ui/Display";
 import { Tooltip, TooltipProvider } from "@penumbra-zone/ui/Tooltip";
-import { penumbraToCoinGeckoMap } from "../data/coingecko";
+
 import { Cone } from "lucide-react";
 
 function knownValueView(metadata: Metadata, amount: Amount): ValueView {
@@ -126,32 +127,6 @@ class Supply {
 
   static fromJson(data: Jsonified<Supply>): Supply {
     return new Supply(ValueView.fromJson(data.total), data.staked_percentage);
-  }
-}
-
-async function fetchCoinGeckoPrice(
-  metadata: Metadata
-): Promise<number | undefined> {
-  let coinGeckoId = metadata.coingeckoId;
-  if (!coinGeckoId) {
-    coinGeckoId = metadata.symbol;
-  }
-
-  try {
-    const response = await fetch(
-      `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coinGeckoId}&vs_currencies=usd&x_cg_pro_api_key=${process.env.COINGECKO_API_KEY}`
-    );
-    if (!response.ok) {
-      console.error(
-        `Failed to fetch CoinGecko price for ${coinGeckoId}, status: ${response.status}`
-      );
-      return undefined;
-    }
-    const data = await response.json();
-    return data[coinGeckoId]?.usd;
-  } catch (error) {
-    console.error(`Error fetching CoinGecko price for ${coinGeckoId}:`, error);
-    return undefined;
   }
 }
 
