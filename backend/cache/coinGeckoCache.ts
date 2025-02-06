@@ -1,6 +1,7 @@
 import type { Metadata } from "@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb";
 
-const COINGECKO_CACHE_TTL_MS = 60 * 1000; // one minute
+// const COINGECKO_CACHE_TTL_MS = 60 * 1000; // one minute
+const COINGECKO_CACHE_TTL_MS = 60 * 1000 * 10; // ten minutes
 
 // Small cache-aside layer for coin gecko (guecko? gekko?) prices.
 interface CacheEntry {
