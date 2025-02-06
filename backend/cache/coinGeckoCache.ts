@@ -1,6 +1,5 @@
 import type { Metadata } from "@penumbra-zone/protobuf/penumbra/core/asset/v1/asset_pb";
 
-// const COINGECKO_CACHE_TTL_MS = 60 * 1000; // one minute
 const COINGECKO_CACHE_TTL_MS = 60 * 1000 * 10; // ten minutes
 
 // Small cache-aside layer for coin gecko (guecko? gekko?) prices.
@@ -10,9 +9,10 @@ interface CacheEntry {
 }
 
 const coinGeckoCache = new Map<string, CacheEntry>();
+const inFlightRequests = new Map<string, Promise<number | undefined>>();
 
-// We ONLY block if the cache is empty, but otherwise, we prefer
-// to return slightly stale values than to block the request.
+// We only block if the cache is empty.
+// We only make one request per asset at a time.
 export async function fetchCoinGeckoPrice(
   metadata: Metadata
 ): Promise<number | undefined> {
@@ -21,17 +21,23 @@ export async function fetchCoinGeckoPrice(
 
   const now = Date.now();
   const cached = coinGeckoCache.get(coinGeckoId);
-  if (cached) {
-    if (cached.expiry > now) {
-      return cached.value;
-    } else {
-      // We return a value immediately but trigger a refresh.
-      refreshCoinGeckoPrice(coinGeckoId);
-      return cached.value;
-    }
+  if (cached && cached.expiry > now) {
+    return cached.value;
   }
 
-  return await fetchAndCacheCoinGeckoPrice(coinGeckoId);
+  if (inFlightRequests.has(coinGeckoId)) {
+    return await inFlightRequests.get(coinGeckoId)!;
+  }
+
+  const promise = fetchAndCacheCoinGeckoPrice(coinGeckoId);
+  inFlightRequests.set(coinGeckoId, promise);
+
+  try {
+    const price = await promise;
+    return price;
+  } finally {
+    inFlightRequests.delete(coinGeckoId);
+  }
 }
 
 async function fetchAndCacheCoinGeckoPrice(
@@ -70,46 +76,6 @@ async function fetchAndCacheCoinGeckoPrice(
 }
 
 /**
- * Fires off a background refresh of the CoinGecko price.
- * Duplicate refreshes are not prevented in this implementation, but eh. probably fine.
- */
-function refreshCoinGeckoPrice(coinGeckoId: string) {
-  (async () => {
-    const now = Date.now();
-    try {
-      const response = await fetch(
-        `https://pro-api.coingecko.com/api/v3/simple/price?ids=${coinGeckoId}&vs_currencies=usd&x_cg_pro_api_key=${process.env.COINGECKO_API_KEY}`
-      );
-      if (!response.ok) {
-        console.error(
-          `Failed to refresh CoinGecko price for ${coinGeckoId}, status: ${response.status}`
-        );
-        coinGeckoCache.set(coinGeckoId, {
-          value: undefined,
-          expiry: now + COINGECKO_CACHE_TTL_MS,
-        });
-        return;
-      }
-      const data = await response.json();
-      const price = data[coinGeckoId]?.usd;
-      coinGeckoCache.set(coinGeckoId, {
-        value: price,
-        expiry: now + COINGECKO_CACHE_TTL_MS,
-      });
-    } catch (error) {
-      console.error(
-        `Error refreshing CoinGecko price for ${coinGeckoId}:`,
-        error
-      );
-      coinGeckoCache.set(coinGeckoId, {
-        value: undefined,
-        expiry: now + COINGECKO_CACHE_TTL_MS,
-      });
-    }
-  })();
-}
-
-/**
  * We kick off a refresh every 30 minutes for all keys in the cache.
  * That way we don't return horribly stale information on cold loads.
  */
@@ -123,7 +89,7 @@ function scheduleCacheRefreshCron() {
     keys.forEach((id) => {
       fetchAndCacheCoinGeckoPrice(id).catch((err) => console.error(err));
     });
-  }, 30 * 60 * 1000); // 30 min
+  }, 30 * 60 * 1000);
 }
 
 scheduleCacheRefreshCron();
